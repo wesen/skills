@@ -1,127 +1,152 @@
-Upload markdown (or a ticket document) to a reMarkable device as a PDF.
+Upload markdown, documentation bundles, and source code bundles to a reMarkable device as PDFs.
 
-This guide assumes you have the working uploader script installed at:
+Preferred tool:
+
+- `remarquee` (rmapi-backed)
+
+Legacy fallback:
 
 - `python3 /home/manuel/.local/bin/remarkable_upload.py`
 
 What it does:
 - Converts `.md` → `.pdf` via `pandoc` + `xelatex` (DejaVu fonts)
-- Strips YAML frontmatter before conversion (prevents pandoc YAML parse issues and keeps metadata out of the PDF)
-- Uploads via `rmapi` into `ai/YYYY/MM/DD/` (optionally into a per-ticket subdirectory)
+- (bundle mode) Creates a single PDF with a clickable Table of Contents (ToC)
+- (src mode) Renders source files as syntax-highlighted PDFs
+- Uploads into `/ai/YYYY/MM/DD/` (optionally into a per-ticket subdirectory)
 - Avoids overwriting unless you pass `--force`
 
 ## The mental model (for people new to this)
 
 You always do the same 3 steps:
 
-1) **Choose the markdown file(s)** you want to upload.
+1) **Choose the inputs** you want to upload (markdown and/or source files).
 2) **Dry-run** to confirm:
-   - destination folder (`ai/YYYY/MM/DD/`)
-   - (optional) ticket subfolder if you use `--mirror-ticket-structure`
+   - destination folder (`/ai/YYYY/MM/DD/` or `--remote-dir` override)
+   - (optional) ticket subfolder (choose via `--remote-dir`, e.g. `/ai/YYYY/MM/DD/<TICKET-ID>/`)
    - PDF filename(s)
    - the exact pandoc/rmapi commands that would run
 3) **Run the real upload** (and only use `--force` if you explicitly want to overwrite).
 
-## Quick Start (upload one markdown file)
+## Quick Start (remarquee)
 
 1) Dry-run:
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py --dry-run /abs/path/to/doc.md
+remarquee upload md --dry-run /abs/path/to/doc.md
 ```
 
 2) Upload (no overwrite):
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py /abs/path/to/doc.md
+remarquee upload md /abs/path/to/doc.md
 ```
 
 3) If it reports the PDF already exists, ask before overwriting, then:
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py --force /abs/path/to/doc.md
+remarquee upload md --force /abs/path/to/doc.md
 ```
 
-## Upload a document that lives inside a ticket directory
+## Bundle multiple markdown files into one PDF (ToC)
 
-The script can infer the destination date folder from ticket paths like:
-
-- `.../ttmp/YYYY/MM/DD/TICKET--slug/...`
-
-Recommended pattern (explicit doc path + ticket-dir for context):
+If you want a single PDF (e.g. diary + tutorial + READMEs), use `bundle`:
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py \
-  --ticket-dir /abs/path/to/moments/ttmp/YYYY/MM/DD/TICKET--slug \
-  --dry-run \
-  /abs/path/to/moments/ttmp/YYYY/MM/DD/TICKET--slug/design-doc/01-something.md
+remarquee upload bundle --dry-run \
+  --name "MO-GLAZE-001 Docs" \
+  --remote-dir "/ai/2026/01/19/MO-GLAZE-001-UPDATE-DOCS" \
+  --toc-depth 2 \
+  /abs/path/to/01-diary.md \
+  /abs/path/to/02-tutorial.md \
+  /abs/path/to/03-readme.md
 ```
 
-Then run the same command without `--dry-run`.
+Then run without `--dry-run`.
 
-## Avoid overwrites: upload into a ticket subdirectory (recommended)
+### Tip: control ToC order + titles
 
-If you don't want collisions inside `ai/YYYY/MM/DD/`, use:
+If you care about ordering and ToC labels, copy/rename inputs into a temp dir like:
 
-- `--mirror-ticket-structure`: uploads into `ai/YYYY/MM/DD/<ticket-root>/<relative-subdir>/`
-- `--remote-ticket-root`: override `<ticket-root>` (default is the ticket directory name)
+```
+01-diary.md
+02-tutorial.md
+03-example-a.md
+04-example-b.md
+```
 
-This mode will also create intermediate directories on the device (via `rmapi mkdir`).
+Then pass the directory to `bundle`.
+
+## Bundle source files into one PDF (syntax highlighted)
+
+```bash
+remarquee upload src --dry-run \
+  --bundle \
+  --include-ext .go \
+  --name "MO-GLAZE-001 Examples" \
+  --remote-dir "/ai/2026/01/19/MO-GLAZE-001-UPDATE-DOCS" \
+  --toc-depth 2 \
+  /abs/path/to/examples/
+```
+
+Then run without `--dry-run`.
+
+## Ticket-aware uploads (recommended)
+
+Recommended remote layout:
+
+- `/ai/YYYY/MM/DD/<TICKET-ID>/`
 
 Example:
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py \
-  --ticket-dir /abs/path/to/pinocchio/ttmp/YYYY/MM/DD/TICKET--slug \
-  --mirror-ticket-structure \
-  --remote-ticket-root TICKET \
-  --dry-run \
-  /abs/path/to/pinocchio/ttmp/YYYY/MM/DD/TICKET--slug/design-doc/01-something.md
+remarquee upload bundle --dry-run \
+  --name "TICKET Docs" \
+  --remote-dir "/ai/2026/01/19/MO-GLAZE-001-UPDATE-DOCS" \
+  --toc-depth 2 \
+  /abs/path/to/ttmp/2026/01/19/MO-GLAZE-001-UPDATE-DOCS--*/diary/01-diary.md \
+  /abs/path/to/pkg/doc/tutorials/05-build-first-command.md
 ```
 
 Then run the same command without `--dry-run`.
 
-## Choose / override the destination folder
+## Verify uploads
 
-Destination is always `ai/YYYY/MM/DD/`.
+List the destination folder:
 
-How the date is chosen:
-- If the script can infer a ticket date from the ticket directory path: it uses that.
-- Otherwise: it uses today’s date.
+```bash
+remarquee cloud ls /ai/YYYY/MM/DD/<TICKET-ID> --long
+```
+
+## Choose / override the destination folder (remarquee)
+
+Destination is `/ai/YYYY/MM/DD/` by default.
 
 Override explicitly:
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py --date 2025/12/11 /abs/path/to/doc.md
+remarquee upload md --date 2025/12/11 /abs/path/to/doc.md
 ```
 
-## Upload multiple markdown files
+## Troubleshooting (remarquee)
 
-Just pass multiple paths:
+- **Auth / one-time code**:
+  - Run without `--non-interactive` once to complete auth, then use `--non-interactive` in scripts/CI.
+- **Noisy debug logs**:
+  - Use `--log-level warn` (global flag), e.g. `remarquee --log-level warn upload bundle ...`
+- **PDF already exists**:
+  - Default is skip; only use `--force` if you explicitly want to overwrite (it deletes annotations too).
+- **pandoc/xelatex missing**:
+  - Install pandoc and a TeX distribution that provides xelatex.
+
+## Legacy fallback: remarkable_upload.py
+
+The legacy script may still be useful if you rely on its frontmatter-stripping behavior.
 
 ```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py --dry-run /abs/a.md /abs/b.md
-python3 /home/manuel/.local/bin/remarkable_upload.py /abs/a.md /abs/b.md
+python3 /home/manuel/.local/bin/remarkable_upload.py --dry-run /abs/path/to/doc.md
+python3 /home/manuel/.local/bin/remarkable_upload.py /abs/path/to/doc.md
+python3 /home/manuel/.local/bin/remarkable_upload.py --force /abs/path/to/doc.md
 ```
-
-## Troubleshooting
-
-- **`rmapi` not logged in / auth fails**:
-  - Run `rmapi` manually once and complete authentication.
-  - Then re-run the upload.
-
-- **`pandoc` missing**:
-  - Install pandoc.
-
-- **`xelatex` missing**:
-  - Install a TeX distribution that provides `xelatex`.
-
-- **File not found**:
-  - Use absolute paths to the markdown file.
-
-- **A PDF already exists on the device**:
-  - The script will skip without `--force`.
-  - Only use `--force` if you explicitly want to overwrite.
 
 ## Getting Annotated PDFs from reMarkable
 
