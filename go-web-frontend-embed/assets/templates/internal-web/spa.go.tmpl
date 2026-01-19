@@ -1,0 +1,60 @@
+package web
+
+import (
+	"io"
+	"io/fs"
+	"net/http"
+	"strings"
+)
+
+type SPAOptions struct {
+	APIPrefix string // default "/api"
+	WSPath    string // default "/ws"
+}
+
+func RegisterSPA(mux *http.ServeMux, publicFS fs.FS, opts SPAOptions) {
+	if publicFS == nil {
+		return
+	}
+	if _, err := publicFS.Open("index.html"); err != nil {
+		return
+	}
+
+	apiPrefix := opts.APIPrefix
+	if apiPrefix == "" {
+		apiPrefix = "/api"
+	}
+	wsPath := opts.WSPath
+	if wsPath == "" {
+		wsPath = "/ws"
+	}
+
+	fileServer := http.FileServer(http.FS(publicFS))
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, apiPrefix) || strings.HasPrefix(r.URL.Path, wsPath) {
+			http.NotFound(w, r)
+			return
+		}
+
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+
+		f, err := publicFS.Open(path)
+		if err != nil {
+			index, err := publicFS.Open("index.html")
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			defer func() { _ = index.Close() }()
+
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = io.Copy(w, index)
+			return
+		}
+		_ = f.Close()
+		fileServer.ServeHTTP(w, r)
+	}))
+}

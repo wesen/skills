@@ -1,0 +1,20 @@
+.PHONY: dev-backend dev-frontend build frontend-check test
+
+UI_DIR ?= ui
+DEV_API_ADDR ?= :3001
+DEV_UI_PORT ?= 3000
+
+dev-backend:
+	go run ./cmd/server serve --addr "$(DEV_API_ADDR)"
+
+dev-frontend:
+	pnpm -C $(UI_DIR) dev --host --port "$(DEV_UI_PORT)"
+
+frontend-check:
+	pnpm -C $(UI_DIR) run check
+
+build:
+	go generate ./... && go build -tags embed ./...
+
+test:
+	go test ./... -count=1
