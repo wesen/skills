@@ -76,6 +76,14 @@ Brief statement of what this diary captures.
 
 Write 1–2 short prose paragraphs here (required). Explain intent, what changed at a high level, and what it unlocked.
 
+### Prompt Context
+
+**User prompt (verbatim):** "<paste exactly what the user typed>"
+
+**Assistant interpretation:** <your interpretation of what the user is asking for (paraphrase)>
+
+**Inferred user intent:** <what outcome the user is trying to achieve / why they asked>
+
 **Commit (code):** <hash> — "<message>"   # if code changed
 
 ### What I did
@@ -113,6 +121,10 @@ Write 1–2 short prose paragraphs here (required). Explain intent, what changed
 ## Writing Rules (strict)
 
 - Start each step with 1–2 short prose paragraphs (required).
+- Always include a `Prompt Context` section for each step:
+  - `User prompt (verbatim)` must be the exact user text (no paraphrasing, no normalization).
+  - `Assistant interpretation` is your concise paraphrase of the request.
+  - `Inferred user intent` captures the user’s underlying goal/outcome.
 - Record failures immediately; keep errors/versions/commands verbatim.
 - Always include these sections for any code/behavior change: `What was tricky to build`, `What warrants a second pair of eyes`, `What should be done in the future`.
 - Do not add backwards-compatibility shims unless the ticket/spec requires it; document behavior changes and update tests/docs instead.
