@@ -1,0 +1,61 @@
+# __BINARY__
+
+__DESCRIPTION__
+
+## What it does
+
+- TODO: 3–6 bullets describing the tool/library
+
+## Install
+
+### Homebrew
+
+This repo is intended to be released via GoReleaser and published to the go-go-golems Homebrew tap.
+
+```bash
+brew tap __BREW_TAP__
+brew install __BINARY__
+```
+
+### Go install (from source)
+
+```bash
+go install __MODULE__/cmd/__BINARY__@latest
+```
+
+## Quick start
+
+```bash
+__BINARY__ --help
+__BINARY__ <subcommand> --help
+```
+
+Add concrete examples once subcommands stabilize.
+
+## Development
+
+```bash
+make lint
+make test
+make build
+```
+
+Pre-commit hooks are managed via `lefthook.yml`:
+
+```bash
+lefthook install
+```
+
+Snapshot release:
+
+```bash
+make goreleaser
+```
+
+## Security notes
+
+Treat CLI output, logs, and exported data as sensitive until you’ve reviewed what the tool emits.
+
+## License
+
+MIT. See `LICENSE`.

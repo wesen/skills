@@ -1,0 +1,104 @@
+version: 2
+project_name: __PROJECT_NAME__
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+  - id: __BINARY__-linux
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/__BINARY__
+    binary: __BINARY__
+    goos:
+      - linux
+# I am not able to test windows at the time
+#      - windows
+    goarch:
+      - amd64
+      - arm64
+  - id: __BINARY__-darwin
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/__BINARY__
+    binary: __BINARY__
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+signs:
+  - artifacts: checksum
+    # setup for github actions according to https://goreleaser.com/ci/actions/
+    args: [ "--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}" ]
+
+brews:
+  - name: __BINARY__
+    description: "__DESCRIPTION__"
+    homepage: "https://github.com/__REPO_OWNER__/__REPO_NAME__"
+    repository:
+      owner: __TAP_OWNER__
+      name: __TAP_REPO__
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+
+nfpms:
+  -
+    id: packages
+
+    vendor: GO GO GOLEMS
+    homepage: https://github.com/__REPO_OWNER__/__REPO_NAME__
+    maintainer: Manuel Odendahl <wesen@ruinwesen.com>
+
+    description: |-
+      __BINARY__ is a tool
+
+    license: MIT
+
+    # Formats to be generated.
+    formats:
+      # - apk
+      - deb
+      - rpm
+
+    # Version Release.
+    release: 1
+
+    # Section.
+    section: default
+
+    # Priority.
+    priority: extra
+
+    # Custom configuration applied only to the Deb packager.
+    deb:
+      # Lintian overrides
+      lintian_overrides:
+        - statically-linked-binary
+        - changelog-file-missing-in-native-package
+
+publishers:
+  - name: fury.io
+    # by specifying `packages` id here goreleaser will only use this publisher
+    # with artifacts identified by this id
+    ids:
+      - packages
+    dir: "{{ dir .ArtifactPath }}"
+    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/__ORG__/
+
+# modelines, feel free to remove those if you don't want/use them:
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
