@@ -121,11 +121,13 @@ Write 1–2 short prose paragraphs here (required). Explain intent, what changed
 ## Writing Rules (strict)
 
 - Start each step with 1–2 short prose paragraphs (required).
-- Always include a `Prompt Context` section for each step:
-  - `User prompt (verbatim)` must be the exact user text (no paraphrasing, no normalization).
+- Always include a `Prompt Context` section for each step.
+  - `User prompt (verbatim)` must be the exact user text (no paraphrasing, no normalization) the **first time** that prompt appears in the diary.
+  - If the same user prompt is reused for multiple steps, only include it verbatim once (the first time). In later steps, replace it with a short pointer like: `User prompt (verbatim): (see Step N)` or `User prompt (verbatim): (same as Step N)`.
   - `Assistant interpretation` is your concise paraphrase of the request.
   - `Inferred user intent` captures the user’s underlying goal/outcome.
 - Record failures immediately; keep errors/versions/commands verbatim.
+- For `What was tricky to build`, explain the underlying cause, the symptoms you observed, and how you approached a solution. If you found a solution, state the exact steps you took.
 - Always include these sections for any code/behavior change: `What was tricky to build`, `What warrants a second pair of eyes`, `What should be done in the future`.
 - Do not add backwards-compatibility shims unless the ticket/spec requires it; document behavior changes and update tests/docs instead.
 - Relate any file you modified and any file that materially shaped decisions; always use absolute paths in `--file-note`.
