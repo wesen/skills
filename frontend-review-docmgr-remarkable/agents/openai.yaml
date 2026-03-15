@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Review to reMarkable"
+  short_description: "Run deep frontend audits and publish ticket docs to reMarkable"
+  default_prompt: "Use $frontend-review-docmgr-remarkable to assess this frontend, write ticket docs, and upload the final report to reMarkable."

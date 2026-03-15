@@ -1,0 +1,4 @@
+interface:
+  display_name: "Glazed Help Page Authoring"
+  short_description: "Write and wire Glazed CLI help pages"
+  default_prompt: "Use $glazed-help-page-authoring to draft and integrate a new Glazed help section."

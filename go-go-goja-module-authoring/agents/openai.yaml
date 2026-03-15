@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go-Go-Goja Module Authoring"
+  short_description: "Build reusable go-go-goja native modules"
+  default_prompt: "Create or refactor a Go package into a go-go-goja native module and wire require(\"<module>\") with tests and docs."

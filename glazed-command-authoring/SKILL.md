@@ -1,6 +1,6 @@
 ---
 name: glazed-command-authoring
-description: "Create and wire Glazed commands (schema/fields, layers, middlewares, Cobra integration, output defaults, help/logging) for Go CLIs. Use when designing or implementing Glazed commands or upgrading existing command definitions."
+description: "Create and wire Glazed commands (schema/fields/sections, sources/middlewares, Cobra integration, output defaults, help/logging) for Go CLIs. Use when designing or implementing Glazed commands or upgrading existing command definitions."
 ---
 
 # Glazed Command Authoring
@@ -10,10 +10,10 @@ Use this skill when creating or refactoring Glazed commands. It captures the cur
 ## Quick Start (Minimal Workflow)
 
 1) **Define a command struct** embedding `*cmds.CommandDescription`.  
-2) **Define a settings struct** with `glazed.parameter` tags.  
-3) **Create a constructor** that builds the description using `cmds.NewCommandDescription`, `cmds.WithFlags`, and `cmds.WithLayersList`.  
+2) **Define a settings struct** with `glazed` tags.  
+3) **Create a constructor** that builds the description using `cmds.NewCommandDescription`, `cmds.WithFlags`, and `cmds.WithSections`.  
 4) **Implement `RunIntoGlazeProcessor`** and decode values into your settings struct.  
-5) **Build a Cobra command** using `cli.BuildCobraCommand` (or a custom wrapper) and register it in your root/group command.
+5) **Build a Cobra command** using `cli.BuildCobraCommandFromCommand` (or a custom wrapper) and register it in your root/group command.
 
 ## Canonical Code Skeleton
 
@@ -25,18 +25,18 @@ type FooCommand struct {
 }
 
 type FooSettings struct {
-    Limit int  `glazed.parameter:"limit"`
-    Debug bool `glazed.parameter:"debug"`
+    Limit int  `glazed:"limit"`
+    Debug bool `glazed:"debug"`
 }
 
 // 2) Constructor
 func NewFooCommand() (*FooCommand, error) {
-    glazedLayer, err := schema.NewGlazedSchema()
+    glazedSection, err := settings.NewGlazedSchema()
     if err != nil {
         return nil, err
     }
 
-    commandSettingsLayer, err := cli.NewCommandSettingsLayer()
+    commandSettingsSection, err := cli.NewCommandSettingsSection()
     if err != nil {
         return nil, err
     }
@@ -65,7 +65,7 @@ Examples:
                 fields.WithHelp("Enable debug output"),
             ),
         ),
-        cmds.WithLayersList(glazedLayer, commandSettingsLayer),
+        cmds.WithSections(glazedSection, commandSettingsSection),
     )
 
     return &FooCommand{CommandDescription: cmdDesc}, nil
@@ -77,8 +77,8 @@ func (c *FooCommand) RunIntoGlazeProcessor(
     vals *values.Values,
     gp middlewares.Processor,
 ) error {
-    settings := FooSettings{}
-    if err := values.DecodeSectionInto(vals, schema.DefaultSlug, &settings); err != nil {
+    settings := &FooSettings{}
+    if err := vals.DecodeSectionInto(schema.DefaultSlug, settings); err != nil {
         return err
     }
 
@@ -90,26 +90,26 @@ func (c *FooCommand) RunIntoGlazeProcessor(
 }
 ```
 
-## Field/Parameter Conventions
+## Field/Section Conventions
 
 - **Preferred constructor**: use `fields.New(...)` (not the older `parameters.NewParameterDefinition`).
-- **Struct tags**: `glazed.parameter:"flag-name"` is the authoritative mapping.
-- **Always decode** with `values.DecodeSectionInto(vals, schema.DefaultSlug, &settings)` instead of reading Cobra flags directly.
+- **Struct tags**: `glazed:"flag-name"` is the authoritative mapping.
+- **Always decode** with `vals.DecodeSectionInto(schema.DefaultSlug, settings)` instead of reading Cobra flags directly.
 
-## Layer Composition
+## Section Composition
 
-- **Glazed output layer**: `schema.NewGlazedSchema()` (adds `--output`, `--fields`, etc).  
-- **Command settings layer**: `cli.NewCommandSettingsLayer()` (adds `--print-parsed-parameters`, `--print-schema`, `--print-yaml`).  
-- Add **custom layers** (e.g. Zigbee layer) via `cmds.WithLayersList(...)`.
+- **Glazed output section**: `settings.NewGlazedSchema()` (adds `--output`, `--fields`, etc).  
+- **Command settings section**: `cli.NewCommandSettingsSection()` (adds `--print-parsed-fields`, `--print-schema`, `--print-yaml`).  
+- Add **custom sections** (e.g. Zigbee section) via `cmds.WithSections(...)`.
 
 ### Per-command output defaults
 
-If a command should default to a specific output (ex: `yaml` + streaming), supply output defaults when creating the glazed layer:
+If a command should default to a specific output (ex: `yaml` + streaming), supply output defaults when creating the glazed section:
 
 ```go
-glazedLayer, err := schema.NewGlazedSchema(
-    settings.WithOutputParameterLayerOptions(
-        layers.WithDefaults(map[string]interface{}{
+glazedSection, err := settings.NewGlazedSchema(
+    settings.WithOutputSectionOptions(
+        schema.WithDefaults(map[string]interface{}{
             "output": "yaml",
             "stream": true,
         }),
@@ -124,9 +124,9 @@ Use this for commands that primarily stream events or logs.
 - Build the Cobra command with:
 
 ```go
-cobraCmd, err := cli.BuildCobraCommand(cmd,
+cobraCmd, err := cli.BuildCobraCommandFromCommand(cmd,
     cli.WithParserConfig(cli.CobraParserConfig{
-        ShortHelpLayers: []string{schema.DefaultSlug},
+        ShortHelpSections: []string{schema.DefaultSlug},
         MiddlewaresFunc: cli.CobraCommandDefaultMiddlewares,
     }),
 )
@@ -146,10 +146,10 @@ If you need config/env/profile precedence (like Geppetto), implement a custom `M
 
 ## Logging (recommended)
 
-- Add logging layer to root command:
+- Add logging section to root command:
 
 ```go
-_ = logging.AddLoggingLayerToRootCommand(rootCmd, "appname")
+_ = logging.AddLoggingSectionToRootCommand(rootCmd, "appname")
 ```
 
 - Initialize logging in `PersistentPreRunE`:
@@ -172,6 +172,26 @@ If you use explicit groups, keep this convention:
 - one file per verb
 - one `root.go` per group to register subcommands
 
+### Directory Layout (Cobra Groups Mirror Folders)
+
+When using explicit Cobra parent commands (groups), make the **folder structure mirror the CLI tree**:
+
+```text
+cmd/<app>/
+  main.go                        # root cobra command wiring (imports groups)
+  cmds/
+    <group>/
+      root.go                    # defines the group cobra.Command + registers subcommands
+      <verb>.go                  # defines the Glazed command for that verb
+    <other-group>/
+      root.go
+      <verb>.go
+```
+
+Practical rule: if you type `myapp <group> <verb> ...`, then `<group>` should be a folder and `<verb>` should be a file inside it.
+
+`root.go` in each group should usually expose `NewCommand() (*cobra.Command, error)` (or `Register(root *cobra.Command) error`) and do the `cli.BuildCobraCommandFromCommand(...)` wiring for its children.
+
 ## Streaming Commands
 
 - Use a `--watch` or `--stream` flag.
@@ -181,12 +201,11 @@ If you use explicit groups, keep this convention:
 ## Common Pitfalls
 
 - **Pointer to interface**: `schema.Section` is an interface; don’t use `*schema.Section`.
-- **Output defaults**: use `settings.WithOutputParameterLayerOptions` on `schema.NewGlazedSchema`.
+- **Output defaults**: use `settings.WithOutputSectionOptions` on `settings.NewGlazedSchema`.
 - **Help frontmatter**: quote strings with colons.
-- **Duplicate flags**: don’t add the same layer to both parent and child commands.
+- **Duplicate flags**: don’t add the same section to both parent and child commands.
 
 ## Reference: Read these when needed
 
 - Glazed tutorial: `/home/manuel/code/wesen/corporate-headquarters/glazed/pkg/doc/tutorials/05-build-first-command.md`
-- Glazed repo code (patterns, middlewares, layers): `/home/manuel/code/wesen/corporate-headquarters/glazed`
-
+- Glazed repo code (patterns, sources, sections): `/home/manuel/code/wesen/corporate-headquarters/glazed`

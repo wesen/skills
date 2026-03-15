@@ -56,6 +56,7 @@ docmgr doc relate --ticket TICKET-ID \
 - Prefer absolute paths in `--file-note` for clarity and copy/paste safety.
 - Prefer “subdocument-first” linking: relate most files to the focused subdoc, keep `index.md` as the overview.
 - Keep “RelatedFiles” tight (roughly 3–7 per ticket, not 20+).
+- Store any ad-hoc scripts you create for a ticket in that ticket’s `scripts/` directory under `ttmp/.../scripts` so they are tracked.
 
 ## Common Workflows
 
@@ -110,4 +111,3 @@ docmgr vocab add --category topics --slug my-topic --description "Description"
 ## Reference
 
 Load `references/docmgr.md` for the full (long-form) docmgr workflow, command reference, and best practices.
-

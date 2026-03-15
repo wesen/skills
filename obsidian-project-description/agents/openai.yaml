@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Project Description"
+  short_description: "Store project descriptions in Obsidian"
+  default_prompt: "Use $obsidian-project-description to create or update a ZK-Tool-style project note in /home/manuel/code/wesen/obsidian-vault/Projects/YYYY/MM/DD/, with YAML frontmatter, PROJ - ... naming, repo path, and current status."

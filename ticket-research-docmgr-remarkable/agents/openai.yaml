@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ticket Research Pipeline"
+  short_description: "Create deep ticket research docs"
+  default_prompt: "Use $ticket-research-docmgr-remarkable to create a ticket, run an exhaustive architecture investigation, write design+diary docs, and upload a verified bundle to reMarkable."

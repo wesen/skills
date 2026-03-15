@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go-Go-OS Rich Widgets"
+  short_description: "Port, clean up, and integrate rich widgets in go-go-os-frontend"
+  default_prompt: "Use $go-go-os-frontend-rich-widgets to import or clean up a rich widget in go-go-os-frontend with parts, CSS, Storybook, and Redux policy."
