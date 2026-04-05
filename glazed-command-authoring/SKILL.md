@@ -13,7 +13,53 @@ Use this skill when creating or refactoring Glazed commands. It captures the cur
 2) **Define a settings struct** with `glazed` tags.  
 3) **Create a constructor** that builds the description using `cmds.NewCommandDescription`, `cmds.WithFlags`, and `cmds.WithSections`.  
 4) **Implement `RunIntoGlazeProcessor`** and decode values into your settings struct.  
-5) **Build a Cobra command** using `cli.BuildCobraCommandFromCommand` (or a custom wrapper) and register it in your root/group command.
+5) **Build a Cobra command** using `cli.BuildCobraCommandFromCommand` (or a custom wrapper) and register it in your root/group command.  
+6) **Initialize the root like `glaze`**: add the logging section, create a help system, load embedded docs, and call `help_cmd.SetupCobraRootCommand(...)`.
+
+## Import Paths (glazed v1.0.5+)
+
+All Glazed packages live under `github.com/go-go-golems/glazed/pkg`. Here are the full import paths for the most commonly used packages:
+
+```go
+import (
+    // Command definition and description
+    "github.com/go-go-golems/glazed/pkg/cmds"
+
+    // Field/flag definitions (fields.New, fields.TypeString, etc.)
+    "github.com/go-go-golems/glazed/pkg/cmds/fields"
+
+    // Schema constants (schema.DefaultSlug) and section types
+    "github.com/go-go-golems/glazed/pkg/cmds/schema"
+
+    // Parsed flag/arg values (values.Values, DecodeSectionInto)
+    "github.com/go-go-golems/glazed/pkg/cmds/values"
+
+    // Logging helpers (logging.InitLoggerFromCobra, AddLoggingSectionToRootCommand)
+    "github.com/go-go-golems/glazed/pkg/cmds/logging"
+
+    // Processor interface for emitting rows (middlewares.Processor)
+    "github.com/go-go-golems/glazed/pkg/middlewares"
+
+    // Glazed output section (settings.NewGlazedSchema)
+    "github.com/go-go-golems/glazed/pkg/settings"
+
+    // Row/table types (types.NewRow, types.MRP)
+    "github.com/go-go-golems/glazed/pkg/types"
+
+    // Cobra integration (cli.BuildCobraCommand, cli.NewCommandSettingsSection)
+    "github.com/go-go-golems/glazed/pkg/cli"
+
+    // Help system
+    "github.com/go-go-golems/glazed/pkg/help"
+    help_cmd "github.com/go-go-golems/glazed/pkg/help/cmd"
+)
+```
+
+**Common mistakes** (wrong paths that look plausible):
+- `glazed/pkg/cmds/parameters/fields` — wrong, use `glazed/pkg/cmds/fields`
+- `glazed/pkg/cmds/middlewares` — wrong, use `glazed/pkg/middlewares`
+- `glazed/pkg/values` — wrong, use `glazed/pkg/cmds/values`
+- `glazed/pkg/settings/schema` — wrong, use `glazed/pkg/cmds/schema`
 
 ## Canonical Code Skeleton
 
@@ -133,6 +179,41 @@ cobraCmd, err := cli.BuildCobraCommandFromCommand(cmd,
 ```
 
 - For multiple command groups, create a group `root.go` per directory and call `Register(root, defaults)`.
+- Treat the application root command as a first-class integration point. For Glazed CLIs, the default expectation is that the root follows the same initialization pattern as `/home/manuel/code/wesen/corporate-headquarters/glazed/cmd/glaze/main.go`, not a plain Cobra-only root.
+
+### Root Command Initialization Pattern
+
+Unless there is a strong reason not to, initialize the root command this way:
+
+```go
+rootCmd := &cobra.Command{
+    Use:   "myapp",
+    Short: "Short app description",
+    PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+        return logging.InitLoggerFromCobra(cmd)
+    },
+}
+
+if err := logging.AddLoggingSectionToRootCommand(rootCmd, "myapp"); err != nil {
+    return err
+}
+
+helpSystem := help.NewHelpSystem()
+if err := doc.AddDocToHelpSystem(helpSystem); err != nil {
+    return err
+}
+
+help_cmd.SetupCobraRootCommand(helpSystem, rootCmd)
+```
+
+That means:
+
+- the root is responsible for logging setup
+- the root is responsible for loading embedded help docs
+- the root exposes Glazed help browsing (`help`, `help topics`, `help <slug>`)
+- child commands should not each invent their own help system
+
+If you are upgrading an older CLI that still uses plain Cobra help, this root initialization is usually the first refactor to make.
 
 ### Custom middlewares
 
@@ -141,7 +222,7 @@ If you need config/env/profile precedence (like Geppetto), implement a custom `M
 ## Help + Documentation
 
 - Use `cmds.WithLong` with examples for every command.
-- Wire the help system at the root using `help.NewHelpSystem()` and `help_cmd.SetupCobraRootCommand()`.
+- Wire the help system at the root using `help.NewHelpSystem()`, a local embedded `doc` package, and `help_cmd.SetupCobraRootCommand()`.
 - **Frontmatter YAML** in help docs must be valid. Quote strings that contain colons.
 
 ## Logging (recommended)
@@ -159,6 +240,8 @@ PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
     return logging.InitLoggerFromCobra(cmd)
 },
 ```
+
+For Glazed apps, logging and help registration belong together at the root. If a CLI has one but not the other, treat that as an incomplete initialization state.
 
 ## Grouping Commands
 

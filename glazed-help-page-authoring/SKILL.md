@@ -71,6 +71,9 @@ Add:
 - Ensure `Short` does not duplicate entire intro paragraphs.
 - Ensure topics/commands/flags tags improve filtering.
 
+8. Verify root integration, not just markdown.
+Help pages are only fully usable when the application root is initialized like `glaze`: logging section on the root, embedded docs loaded into `help.NewHelpSystem()`, and `help_cmd.SetupCobraRootCommand(...)` called exactly once on the root command.
+
 ## Go Integration Pattern
 
 Use embedded docs and register them with Cobra:
@@ -100,6 +103,32 @@ if err := doc.AddDocToHelpSystem(helpSystem); err != nil {
 help_cmd.SetupCobraRootCommand(helpSystem, rootCmd)
 ```
 
+When working on a Glazed CLI, this is not optional polish. This is the canonical initialization path for proper help behavior. If the CLI still has a plain Cobra root, treat the task as incomplete until the root has been upgraded.
+
+The reference pattern is `/home/manuel/code/wesen/corporate-headquarters/glazed/cmd/glaze/main.go`.
+
+In practice, the root command should also initialize logging at the same level:
+
+```go
+rootCmd := &cobra.Command{
+    Use:   "myapp",
+    Short: "My app",
+    PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+        return logging.InitLoggerFromCobra(cmd)
+    },
+}
+
+if err := logging.AddLoggingSectionToRootCommand(rootCmd, "myapp"); err != nil {
+    return err
+}
+```
+
+That combined root pattern gives you:
+
+- structured logging flags on every command
+- Glazed help topics and slug lookup
+- one consistent initialization path for all child commands
+
 ## Definition of Done
 
 - Frontmatter fields parse and use exact Glazed keys.
@@ -107,3 +136,4 @@ help_cmd.SetupCobraRootCommand(helpSystem, rootCmd)
 - Content explains what/how/why, not just what.
 - Troubleshooting and `See Also` sections exist.
 - Slug is unique and queryable with `glaze help <slug>`.
+- The CLI root is wired with embedded docs and `help_cmd.SetupCobraRootCommand(...)`, not left on default Cobra help.

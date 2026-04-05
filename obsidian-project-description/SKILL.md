@@ -1,13 +1,13 @@
 ---
 name: obsidian-project-description
-description: Create or update an Obsidian project-description note in Manuel's vault at /home/manuel/code/wesen/obsidian-vault when the user wants a repo, project, or ticket summarized as a durable project note. Use when the user mentions the Obsidian vault, asks to add a project description, wants a note modeled after an existing Projects/PROJ note such as PROJ - ZK Tool, or asks to include metadata such as the project date, repo directory, status, tags, and current purpose.
+description: Append-only Obsidian project-description workflow for Manuel's vault at /home/manuel/code/wesen/obsidian-vault. Create new project notes or new dated follow-up notes without overwriting historical notes unless the user explicitly asks. Use when the user mentions the Obsidian vault, asks to add a project description, wants a note modeled after an existing Projects/PROJ note such as PROJ - ZK Tool, or asks to include metadata such as the project date, repo directory, status, tags, and current purpose.
 ---
 
 # Obsidian Project Description
 
 ## Overview
 
-Use this skill to turn a local project or repository into a readable Obsidian project note in Manuel's vault at `/home/manuel/code/wesen/obsidian-vault`. The default target is the vault's `Projects/YYYY/MM/DD/` structure, and the default style reference is `/home/manuel/code/wesen/obsidian-vault/Projects/2026/03/15/PROJ - ZK Tool.md`.
+Use this skill to turn a local project or repository into a readable Obsidian project note in Manuel's vault at `/home/manuel/code/wesen/obsidian-vault`. The default target is the vault's `Projects/YYYY/MM/DD/` structure, and the default style reference is `/home/manuel/code/wesen/obsidian-vault/Projects/2026/03/15/PROJ - ZK Tool.md`. This skill should operate in append-only mode by default: preserve existing historical notes and create a new dated note instead of overwriting or deleting an older one unless the user explicitly asks for replacement.
 
 The note should follow that pattern closely:
 
@@ -35,6 +35,7 @@ Rules:
 - If the user gives an example note, read it first and match its tone, frontmatter shape, section style, and level of detail.
 - If the user gives an exact destination path, use it exactly.
 - If no destination is given, place the note in today's `Projects/YYYY/MM/DD/` folder unless the user explicitly wants a different location.
+- If a related historical note already exists, keep it and create a new dated note rather than overwriting it by default.
 - If the repo directory itself encodes a project date, use that date in the note body; folder placement still follows the user's request, or today's date by default.
 - Prefer a `PROJ - ...` name unless the user clearly wants a different naming scheme.
 
@@ -77,6 +78,7 @@ Default note shape, based on `PROJ - ZK Tool`:
    - `## Current project status`
    - `## Project shape`
    - `## Architecture`
+   - `## Implementation details` — prose, pseudocode, and diagrams explaining how the system works technically
    - `## Current user-facing commands` or equivalent, when relevant
    - `## Important project docs`
    - `## Open questions`
@@ -84,6 +86,31 @@ Default note shape, based on `PROJ - ZK Tool`:
    - `## Project working rule`
 
 Do not force every section if the repo does not justify it, but prefer this shape over inventing a new structure.
+
+### Implementation details section
+
+Every project note should include an `## Implementation details` section with substantive technical content. This is not a summary or a list of files — it is a written-out explanation of how the system works, aimed at someone who needs to understand, modify, or reproduce the implementation.
+
+The implementation details section should contain:
+
+- **Prose explanations** of key algorithms, data flows, and design decisions. Explain *why* the code works the way it does, not just *what* it does. Cover the non-obvious parts — the things that would trip up someone reading the code for the first time.
+
+- **Pseudocode or real code snippets** for the most important logic paths. Show the actual algorithm structure, the SQL query patterns, the key function signatures, or the shell commands that drive the system. Keep snippets short and focused on the essential logic.
+
+- **Mermaid diagrams** showing data flow, system architecture, or component relationships. Use ` ```mermaid ` code blocks — Obsidian renders these natively. Prefer `flowchart TD` or `graph LR` for data flow, `graph TD` with subgraphs for architecture layouts, and `flowchart LR` for transformation pipelines. Use `style` directives for color highlights on key nodes (e.g. databases, outputs, error paths). Examples:
+  - pipeline diagrams showing stage-to-stage data flow
+  - architecture diagrams with subgraphs for component boundaries
+  - data structure diagrams showing schema relationships
+  - UI layout diagrams showing spatial arrangement of interface elements
+
+- **Tricky details and failure modes** that are not obvious from the code. Cover encoding issues, edge cases, workarounds for tool limitations, and "why not the obvious approach" explanations. These are often the most valuable parts of the documentation because they capture knowledge that would otherwise be lost.
+
+The implementation section should read like a technical article or a detailed design document — someone should be able to understand how to rebuild the system from this section alone, without reading the code. Aim for the level of detail found in a good blog post about a weekend project: enough to teach, not so much that it becomes a code dump.
+
+Good models from the vault:
+- `PROJ - Scopedjs` uses detailed concept explanations with pseudocode for the eval pipeline
+- `PROJ - Smailnail` uses phased implementation narratives with schema tables and architecture diagrams
+- `PROJ - reMarkable Cleanup` uses data-flow diagrams, algorithm pseudocode, and failure-mode analysis
 
 Prefer prose paragraphs over shallow bullet spam. Use bullets when listing concrete project parts, commands, open questions, or next steps.
 
@@ -140,6 +167,7 @@ Use these rules strictly:
 - Prefer YAML frontmatter over ad hoc metadata bullets in the body.
 - Use callouts sparingly but do include a `> [!summary]` callout when the project has 2-3 clear identities or themes.
 - Keep the note human-readable first. It should feel like durable project documentation, not an AI summary dump.
+- Treat project-note work as append-only by default: do not delete or overwrite an existing note unless the user explicitly asks for that.
 
 ## Common Requests This Skill Should Handle
 

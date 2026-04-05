@@ -1,0 +1,7 @@
+interface:
+  display_name: "Close Dependabot PRs"
+  short_description: "Scan and merge ready Dependabot PRs"
+  default_prompt: "Use $close-dependabot-prs to scan Dependabot PRs, summarize CI, and merge the ready ones."
+
+policy:
+  allow_implicit_invocation: true
