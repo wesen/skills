@@ -43,13 +43,10 @@ Tip: if you care about ToC order and titles, copy/rename files into a temp folde
 - Verify results:
   - `remarquee cloud ls /ai/YYYY/MM/DD/<TICKET-ID> --long --non-interactive`
 
-## Legacy fallback (only if needed)
+## Common issues
 
-If `remarquee` is unavailable, the older uploader script can still be used:
-
-- Dry-run: `python3 /home/manuel/.local/bin/remarkable_upload.py --dry-run /abs/path/to/doc.md`
-- Upload: `python3 /home/manuel/.local/bin/remarkable_upload.py /abs/path/to/doc.md`
-- Overwrite: `python3 /home/manuel/.local/bin/remarkable_upload.py --force /abs/path/to/doc.md`
+- **Nested code blocks in markdown**: If you have markdown containing code blocks (e.g., a markdown example inside a markdown doc), use explicit language tags like ` ```markdown ` and ` ```json `. Do NOT use sed to replace all ` ``` ` markers - it will break nested code blocks.
+- **Pandoc "Unknown alias" errors**: Usually caused by malformed code block syntax. Test with `pandoc <file>.md -o /tmp/test.pdf --pdf-engine=xelatex` to isolate.
 
 ## Reference
 

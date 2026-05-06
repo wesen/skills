@@ -1,12 +1,10 @@
+# Remarkable Upload Reference
+
 Upload markdown, documentation bundles, and source code bundles to a reMarkable device as PDFs.
 
-Preferred tool:
+## Tool
 
 - `remarquee` (rmapi-backed)
-
-Legacy fallback:
-
-- `python3 /home/manuel/.local/bin/remarkable_upload.py`
 
 What it does:
 - Converts `.md` → `.pdf` via `pandoc` + `xelatex` (DejaVu fonts)
@@ -19,13 +17,13 @@ What it does:
 
 You always do the same 3 steps:
 
-1) **Choose the inputs** you want to upload (markdown and/or source files).
-2) **Dry-run** to confirm:
+1. **Choose the inputs** you want to upload (markdown and/or source files).
+2. **Dry-run** to confirm:
    - destination folder (`/ai/YYYY/MM/DD/` or `--remote-dir` override)
    - (optional) ticket subfolder (choose via `--remote-dir`, e.g. `/ai/YYYY/MM/DD/<TICKET-ID>/`)
    - PDF filename(s)
    - the exact pandoc/rmapi commands that would run
-3) **Run the real upload** (and only use `--force` if you explicitly want to overwrite).
+3. **Run the real upload** (and only use `--force` if you explicitly want to overwrite).
 
 ## Quick Start (remarquee)
 
@@ -114,7 +112,7 @@ Then run the same command without `--dry-run`.
 List the destination folder:
 
 ```bash
-remarquee cloud ls /ai/YYYY/MM/DD/<TICKET-ID> --long
+remarquee cloud ls /ai/YYYY/MM/DD/<TICKET-ID> --long --non-interactive
 ```
 
 ## Choose / override the destination folder (remarquee)
@@ -137,16 +135,11 @@ remarquee upload md --date 2025/12/11 /abs/path/to/doc.md
   - Default is skip; only use `--force` if you explicitly want to overwrite (it deletes annotations too).
 - **pandoc/xelatex missing**:
   - Install pandoc and a TeX distribution that provides xelatex.
-
-## Legacy fallback: remarkable_upload.py
-
-The legacy script may still be useful if you rely on its frontmatter-stripping behavior.
-
-```bash
-python3 /home/manuel/.local/bin/remarkable_upload.py --dry-run /abs/path/to/doc.md
-python3 /home/manuel/.local/bin/remarkable_upload.py /abs/path/to/doc.md
-python3 /home/manuel/.local/bin/remarkable_upload.py --force /abs/path/to/doc.md
-```
+- **Nested code blocks in markdown**:
+  - If your markdown contains code blocks (e.g., a markdown example inside a markdown doc), use explicit language tags like ` ```markdown ` and ` ```json `.
+  - Do NOT use sed to replace all ` ``` ` markers - it will break nested code blocks.
+- **Pandoc "Unknown alias" errors**:
+  - Usually caused by malformed code block syntax. Test with `pandoc <file>.md -o /tmp/test.pdf --pdf-engine=xelatex` to isolate.
 
 ## Getting Annotated PDFs from reMarkable
 
