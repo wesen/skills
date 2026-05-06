@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Vault Writing"
+  short_description: "Write project notes, articles, and durable knowledge notes in Obsidian"
+  default_prompt: "Use $obsidian-vault-writing to create or update an Obsidian vault note in /home/manuel/code/wesen/obsidian-vault/Projects/YYYY/MM/DD/, choosing between PROJ - ... and ARTICLE - ... styles as appropriate, with YAML frontmatter, summary callout, relevant links, and durable continuation-friendly structure."

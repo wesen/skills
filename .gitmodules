@@ -1,0 +1,3 @@
+[submodule "ghidra-re-skill"]
+	path = ghidra-re-skill
+	url = https://github.com/SmokeSlate/ghidra-re-skill

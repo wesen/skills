@@ -54,9 +54,10 @@ docmgr doc relate --ticket TICKET-ID \
 - Do not pass `--doc-type` to `doc relate`; target either `--ticket TICKET-ID` (ticket index) or `--doc PATH` (specific doc).
 - Always format related files as `--file-note "path:reason"` (colon separator, not dash).
 - Prefer absolute paths in `--file-note` for clarity and copy/paste safety.
-- Prefer “subdocument-first” linking: relate most files to the focused subdoc, keep `index.md` as the overview.
-- Keep “RelatedFiles” tight (roughly 3–7 per ticket, not 20+).
-- Store any ad-hoc scripts you create for a ticket in that ticket’s `scripts/` directory under `ttmp/.../scripts` so they are tracked.
+- Prefer "subdocument-first" linking: relate most files to the focused subdoc, keep `index.md` as the overview.
+- Keep "RelatedFiles" tight (roughly 3-7 per ticket, not 20+).
+- Store any ad-hoc scripts you create for a ticket in that ticket's `scripts/` directory under `ttmp/.../scripts` so they are tracked. Name scripts with a numerical prefix (`01-...`, `02-...`) to preserve execution order and trace investigation steps.
+- Every active ticket should have a **diary** (typically `reference/02-diary.md` or similar). The diary records chronological investigation steps, what was tried, what failed, and what to do next. Read the diary before resuming work on a ticket.
 
 ## Common Workflows
 
@@ -102,7 +103,7 @@ docmgr validate frontmatter --doc path/to/doc.md --suggest-fixes
 
 ## Vocabulary
 
-If a `doctor` warning indicates an unknown topic/doc-type/category, add it to the vocabulary (or ignore if it’s intentionally out-of-vocab):
+If a `doctor` warning indicates an unknown topic/doc-type/category, add it to the vocabulary (or ignore if it's intentionally out-of-vocab):
 
 ```bash
 docmgr vocab add --category topics --slug my-topic --description "Description"

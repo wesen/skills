@@ -1,0 +1,36 @@
+//go:build !embed
+
+package web
+
+import (
+	"io/fs"
+	"os"
+	"path/filepath"
+)
+
+// PublicFS is the on-disk fallback when the embed build tag is not set.
+// Allows `go run` and `go build` (without -tags embed) to serve
+// the pre-built assets from embed/public.
+var PublicFS fs.FS
+
+func init() {
+	// Walk up from the current working directory to find the repo root
+	// (the directory containing go.mod), then look for embed/public relative to it.
+	root := findRoot()
+	PublicFS = os.DirFS(filepath.Join(root, "internal", "web", "embed", "public"))
+}
+
+func findRoot() string {
+	dir, _ := os.Getwd()
+	for i := 0; i < 10; i++ {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "."
+}

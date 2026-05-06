@@ -142,6 +142,36 @@ func (c *FooCommand) RunIntoGlazeProcessor(
 - **Struct tags**: `glazed:"flag-name"` is the authoritative mapping.
 - **Always decode** with `vals.DecodeSectionInto(schema.DefaultSlug, settings)` instead of reading Cobra flags directly.
 
+### Positional Arguments
+
+Flags are defined with `cmds.WithFlags(...)`. Positional arguments use `cmds.WithArguments(...)` and `fields.WithIsArgument(true)`:
+
+```go
+cmds.NewCommandDescription(
+    "migrate",
+    cmds.WithShort("Run database migrations"),
+    cmds.WithFlags(
+        fields.New(
+            "db-url",
+            fields.TypeString,
+            fields.WithDefault("postgres://localhost/db"),
+            fields.WithHelp("Database URL"),
+        ),
+    ),
+    cmds.WithArguments(
+        fields.New(
+            "action",
+            fields.TypeString,
+            fields.WithDefault("up"),
+            fields.WithHelp("Migration direction: up or down"),
+            fields.WithIsArgument(true),
+        ),
+    ),
+)
+```
+
+This lets users run `pyxis migrate up` instead of `pyxis migrate --action up`. Arguments are decoded the same way as flags via struct tags (`glazed:"action"`).
+
 ## Section Composition
 
 - **Glazed output section**: `settings.NewGlazedSchema()` (adds `--output`, `--fields`, etc).  
@@ -218,6 +248,8 @@ If you are upgrading an older CLI that still uses plain Cobra help, this root in
 ### Custom middlewares
 
 If you need config/env/profile precedence (like Geppetto), implement a custom `MiddlewaresFunc` and pass it via `cli.WithParserConfig`. Keep precedence explicit and documented.
+
+**Env loading note:** `AppName` only drives the built-in env source on the default parser path. If you set `MiddlewaresFunc`, you replace the default chain, so re-add env loading explicitly when you still want `APP_*` variables to work.
 
 ## Help + Documentation
 

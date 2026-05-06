@@ -1,0 +1,16 @@
+//go:build embed
+
+package web
+
+import (
+	"embed"
+	"io/fs"
+)
+
+//go:embed embed/public
+var embeddedFS embed.FS
+
+// PublicFS is the SPA filesystem rooted at embed/public/.
+// Vite builds to dist/ and cmd/build-web copies it to embed/public/ so
+// this directive embeds "index.html", "assets/", etc. directly at the root.
+var PublicFS, _ = fs.Sub(embeddedFS, "embed/public")

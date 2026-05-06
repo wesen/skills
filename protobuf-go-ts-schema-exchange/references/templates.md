@@ -61,6 +61,42 @@ plugins:
       - paths=source_relative
 ```
 
+## Buf config with TypeScript for RTK Query
+
+When generating TypeScript for a frontend that uses RTK Query, place generated code in a shared package so both `pyxis-user-site` and `pyxis-app` can import it.
+
+`buf.gen.yaml`
+```yaml
+version: v2
+plugins:
+  - remote: buf.build/bufbuild/es
+    out: web/packages/pyxis-types/src/generated
+    opt:
+      - target=ts
+      - import_extension=none
+  - remote: buf.build/protocolbuffers/go
+    out: gen/proto
+    opt:
+      - paths=source_relative
+```
+
+Install the TypeScript runtime:
+
+```bash
+cd web/packages/pyxis-types
+npm install @bufbuild/protobuf
+```
+
+Import pattern in RTK Query slices:
+
+```ts
+import { ShowList, ShowListSchema } from "../generated/pyxis/v1/show_pb";
+import { fromJson } from "@bufbuild/protobuf";
+
+// In transformResponse:
+const showList = fromJson(ShowListSchema, response);
+```
+
 ## Go protojson emitter (SEM-style)
 
 ```go
