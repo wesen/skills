@@ -1,0 +1,369 @@
+{
+  "source": "/home/manuel/Downloads/cats.png",
+  "width": 1024,
+  "height": 1536,
+  "cols": 2,
+  "rows": 14,
+  "x_lines": [
+    0,
+    512,
+    1023
+  ],
+  "y_lines": [
+    0,
+    116,
+    230,
+    346,
+    462,
+    576,
+    690,
+    804,
+    918,
+    1032,
+    1146,
+    1260,
+    1374,
+    1464,
+    1535
+  ],
+  "inset": 6,
+  "banners": [
+    {
+      "name": "cats-banner-r01-c01.png",
+      "row": 1,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 6,
+        "width": 500,
+        "height": 104
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r01-c01.png"
+    },
+    {
+      "name": "cats-banner-r01-c02.png",
+      "row": 1,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 6,
+        "width": 499,
+        "height": 104
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r01-c02.png"
+    },
+    {
+      "name": "cats-banner-r02-c01.png",
+      "row": 2,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 122,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r02-c01.png"
+    },
+    {
+      "name": "cats-banner-r02-c02.png",
+      "row": 2,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 122,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r02-c02.png"
+    },
+    {
+      "name": "cats-banner-r03-c01.png",
+      "row": 3,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 236,
+        "width": 500,
+        "height": 104
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r03-c01.png"
+    },
+    {
+      "name": "cats-banner-r03-c02.png",
+      "row": 3,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 236,
+        "width": 499,
+        "height": 104
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r03-c02.png"
+    },
+    {
+      "name": "cats-banner-r04-c01.png",
+      "row": 4,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 352,
+        "width": 500,
+        "height": 104
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r04-c01.png"
+    },
+    {
+      "name": "cats-banner-r04-c02.png",
+      "row": 4,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 352,
+        "width": 499,
+        "height": 104
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r04-c02.png"
+    },
+    {
+      "name": "cats-banner-r05-c01.png",
+      "row": 5,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 468,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r05-c01.png"
+    },
+    {
+      "name": "cats-banner-r05-c02.png",
+      "row": 5,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 468,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r05-c02.png"
+    },
+    {
+      "name": "cats-banner-r06-c01.png",
+      "row": 6,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 582,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r06-c01.png"
+    },
+    {
+      "name": "cats-banner-r06-c02.png",
+      "row": 6,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 582,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r06-c02.png"
+    },
+    {
+      "name": "cats-banner-r07-c01.png",
+      "row": 7,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 696,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r07-c01.png"
+    },
+    {
+      "name": "cats-banner-r07-c02.png",
+      "row": 7,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 696,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r07-c02.png"
+    },
+    {
+      "name": "cats-banner-r08-c01.png",
+      "row": 8,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 810,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r08-c01.png"
+    },
+    {
+      "name": "cats-banner-r08-c02.png",
+      "row": 8,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 810,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r08-c02.png"
+    },
+    {
+      "name": "cats-banner-r09-c01.png",
+      "row": 9,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 924,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r09-c01.png"
+    },
+    {
+      "name": "cats-banner-r09-c02.png",
+      "row": 9,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 924,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r09-c02.png"
+    },
+    {
+      "name": "cats-banner-r10-c01.png",
+      "row": 10,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1038,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r10-c01.png"
+    },
+    {
+      "name": "cats-banner-r10-c02.png",
+      "row": 10,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1038,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r10-c02.png"
+    },
+    {
+      "name": "cats-banner-r11-c01.png",
+      "row": 11,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1152,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r11-c01.png"
+    },
+    {
+      "name": "cats-banner-r11-c02.png",
+      "row": 11,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1152,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r11-c02.png"
+    },
+    {
+      "name": "cats-banner-r12-c01.png",
+      "row": 12,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1266,
+        "width": 500,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r12-c01.png"
+    },
+    {
+      "name": "cats-banner-r12-c02.png",
+      "row": 12,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1266,
+        "width": 499,
+        "height": 102
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r12-c02.png"
+    },
+    {
+      "name": "cats-banner-r13-c01.png",
+      "row": 13,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1380,
+        "width": 500,
+        "height": 78
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r13-c01.png"
+    },
+    {
+      "name": "cats-banner-r13-c02.png",
+      "row": 13,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1380,
+        "width": 499,
+        "height": 78
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r13-c02.png"
+    },
+    {
+      "name": "cats-banner-r14-c01.png",
+      "row": 14,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1470,
+        "width": 500,
+        "height": 59
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r14-c01.png"
+    },
+    {
+      "name": "cats-banner-r14-c02.png",
+      "row": 14,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1470,
+        "width": 499,
+        "height": 59
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/cats/cats-banner-r14-c02.png"
+    }
+  ],
+  "count": 28
+}

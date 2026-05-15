@@ -1,13 +1,13 @@
 ---
 name: obsidian-vault-writing
-description: Append-only Obsidian vault writing workflow for Manuel's vault at /home/manuel/code/wesen/obsidian-vault. Create new project notes, article/playbook-style knowledge notes, or new dated follow-up notes without overwriting historical notes unless the user explicitly asks. Use when the user mentions the Obsidian vault, asks to add a project description, wants a note modeled after an existing Projects/PROJ note such as PROJ - ZK Tool, wants a reusable ARTICLE/playbook/knowledge entry, or asks to include metadata such as the project date, repo directory, status, tags, and current purpose.
+description: Append-only Obsidian vault writing workflow for Manuel's vault at /home/manuel/code/wesen/go-go-golems/go-go-parc. Create new project notes, article/playbook-style knowledge notes, or new dated follow-up notes without overwriting historical notes unless the user explicitly asks. Use when the user mentions the Obsidian vault, asks to add a project description, wants a note modeled after an existing Projects/PROJ note such as PROJ - ZK Tool, wants a reusable ARTICLE/playbook/knowledge entry, or asks to include metadata such as the project date, repo directory, status, tags, and current purpose.
 ---
 
 # Obsidian Vault Writing
 
 ## Overview
 
-Use this skill to create durable Obsidian notes in Manuel's vault at `/home/manuel/code/wesen/obsidian-vault`. The most common outputs are:
+Use this skill to create durable Obsidian notes in Manuel's vault at `/home/manuel/code/wesen/go-go-golems/go-go-parc`. The most common outputs are:
 
 - **project notes** in the `PROJ - ...` style
 - **article / playbook / knowledge notes** in the `ARTICLE - ...` style
@@ -15,8 +15,8 @@ Use this skill to create durable Obsidian notes in Manuel's vault at `/home/manu
 
 The default target is still the vault's `Projects/YYYY/MM/DD/` structure. The default style references are:
 
-- project-note exemplar: `/home/manuel/code/wesen/obsidian-vault/Projects/2026/03/15/PROJ - ZK Tool.md`
-- knowledge/article exemplar: `/home/manuel/code/wesen/obsidian-vault/Projects/2026/04/02/ARTICLE - Playbook - Self-Contained Go Wasm and JavaScript Browser Applications.md`
+- project-note exemplar: `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects/2026/03/15/PROJ - ZK Tool.md`
+- knowledge/article exemplar: `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects/2026/04/02/ARTICLE - Playbook - Self-Contained Go Wasm and JavaScript Browser Applications.md`
 
 This skill should operate in append-only mode by default: preserve existing historical notes and create a new dated note instead of overwriting or deleting an older one unless the user explicitly asks for replacement.
 
@@ -36,13 +36,13 @@ The important decision is not just *how to write the note*, but *what kind of no
 
 Default assumptions for this user's vault:
 
-- Vault root: `/home/manuel/code/wesen/obsidian-vault`
-- Project/knowledge notes section: `/home/manuel/code/wesen/obsidian-vault/Projects`
+- Vault root: `/home/manuel/code/wesen/go-go-golems/go-go-parc`
+- Project/knowledge notes section: `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects`
 - Default folder layout: `Projects/YYYY/MM/DD/`
 - Default project filename pattern: `PROJ - <Project Name> - <Subtitle>.md`
 - Default knowledge/article filename pattern: `ARTICLE - <Topic> - <Subtitle>.md`
-- Default project-note exemplar: `/home/manuel/code/wesen/obsidian-vault/Projects/2026/03/15/PROJ - ZK Tool.md`
-- Default article/playbook exemplar: `/home/manuel/code/wesen/obsidian-vault/Projects/2026/04/02/ARTICLE - Playbook - Self-Contained Go Wasm and JavaScript Browser Applications.md`
+- Default project-note exemplar: `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects/2026/03/15/PROJ - ZK Tool.md`
+- Default article/playbook exemplar: `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects/2026/04/02/ARTICLE - Playbook - Self-Contained Go Wasm and JavaScript Browser Applications.md`
 
 Rules:
 
@@ -224,7 +224,7 @@ Use these rules strictly:
 - Do not invent architecture details that are not supported by local files.
 - Prefer absolute paths when mentioning repo directories outside wikilinks.
 - Use Obsidian wikilinks only for notes inside the vault; use plain text paths for local repo directories.
-- When creating a new note in this vault, default to `/home/manuel/code/wesen/obsidian-vault/Projects/YYYY/MM/DD/` unless the user asks otherwise.
+- When creating a new note in this vault, default to `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects/YYYY/MM/DD/` unless the user asks otherwise.
 - When choosing a filename from scratch, default to `PROJ - <Project Name> - <Subtitle>.md` for project notes and `ARTICLE - <Topic> - <Subtitle>.md` for reusable knowledge notes.
 - Prefer YAML frontmatter over ad hoc metadata bullets in the body.
 - Use callouts sparingly but do include a `> [!summary]` callout when the note has 2-4 clear identities or themes.
@@ -239,7 +239,7 @@ Use these rules strictly:
 - "Create an article/playbook note in my Obsidian vault about this bug class."
 - "Store this as durable engineering knowledge, not just a project report."
 - "Include the project date and directory."
-- "Put it in `/home/manuel/code/wesen/obsidian-vault/Projects/YYYY/MM/DD/`."
+- "Put it in `/home/manuel/code/wesen/go-go-golems/go-go-parc/Projects/YYYY/MM/DD/`."
 - "Use my `PROJ - ...` or `ARTICLE - ...` naming convention."
 - "Move today's project notes into a dated `YYYY/MM/DD` folder."
 - "Update the existing project note to reflect the current design direction."

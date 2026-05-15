@@ -5,10 +5,14 @@ description: Download a document from a reMarkable device/cloud via remarquee (r
 
 # reMarkable Render to PDF
 
+## IMPORTANT: Minimize tool calls
+
+1. **Never run `remarquee status` as a pre-check.** Just run the command you need.
+2. **Never run `remarquee cloud account` before operations.** Upload and cloud commands now auto-retry with reauth on 401/403. Pass `--non-interactive` and let the command handle auth automatically. If you see `NOTE: auth expired, re-authenticating and retrying...` in stderr, just let it proceed.
+3. **Use `cloud search` instead of `cloud ls` + `cloud ls`** when you know the document name — it's one call instead of two.
+
 ## Preconditions
 
-- Confirm `remarquee` works: `remarquee status`
-- Confirm cloud auth: `remarquee cloud account --non-interactive` (run without `--non-interactive` once if you need to complete login)
 - For page extraction: `qpdf` and `pdfinfo`
 
 ## Workflow

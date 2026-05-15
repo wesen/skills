@@ -1,0 +1,394 @@
+{
+  "source": "/home/manuel/Downloads/pastoral.png",
+  "width": 1024,
+  "height": 1536,
+  "cols": 2,
+  "rows": 15,
+  "x_lines": [
+    0,
+    512,
+    1023
+  ],
+  "y_lines": [
+    0,
+    102,
+    204,
+    306,
+    409,
+    511,
+    613,
+    716,
+    818,
+    920,
+    1022,
+    1124,
+    1226,
+    1328,
+    1430,
+    1535
+  ],
+  "inset": 6,
+  "banners": [
+    {
+      "name": "pastoral-banner-r01-c01.png",
+      "row": 1,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 6,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r01-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r01-c02.png",
+      "row": 1,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 6,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r01-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r02-c01.png",
+      "row": 2,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 108,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r02-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r02-c02.png",
+      "row": 2,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 108,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r02-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r03-c01.png",
+      "row": 3,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 210,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r03-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r03-c02.png",
+      "row": 3,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 210,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r03-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r04-c01.png",
+      "row": 4,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 312,
+        "width": 500,
+        "height": 91
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r04-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r04-c02.png",
+      "row": 4,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 312,
+        "width": 499,
+        "height": 91
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r04-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r05-c01.png",
+      "row": 5,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 415,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r05-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r05-c02.png",
+      "row": 5,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 415,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r05-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r06-c01.png",
+      "row": 6,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 517,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r06-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r06-c02.png",
+      "row": 6,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 517,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r06-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r07-c01.png",
+      "row": 7,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 619,
+        "width": 500,
+        "height": 91
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r07-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r07-c02.png",
+      "row": 7,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 619,
+        "width": 499,
+        "height": 91
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r07-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r08-c01.png",
+      "row": 8,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 722,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r08-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r08-c02.png",
+      "row": 8,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 722,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r08-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r09-c01.png",
+      "row": 9,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 824,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r09-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r09-c02.png",
+      "row": 9,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 824,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r09-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r10-c01.png",
+      "row": 10,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 926,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r10-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r10-c02.png",
+      "row": 10,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 926,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r10-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r11-c01.png",
+      "row": 11,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1028,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r11-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r11-c02.png",
+      "row": 11,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1028,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r11-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r12-c01.png",
+      "row": 12,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1130,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r12-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r12-c02.png",
+      "row": 12,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1130,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r12-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r13-c01.png",
+      "row": 13,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1232,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r13-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r13-c02.png",
+      "row": 13,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1232,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r13-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r14-c01.png",
+      "row": 14,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1334,
+        "width": 500,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r14-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r14-c02.png",
+      "row": 14,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1334,
+        "width": 499,
+        "height": 90
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r14-c02.png"
+    },
+    {
+      "name": "pastoral-banner-r15-c01.png",
+      "row": 15,
+      "column": 1,
+      "source_bounds": {
+        "x": 6,
+        "y": 1436,
+        "width": 500,
+        "height": 93
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r15-c01.png"
+    },
+    {
+      "name": "pastoral-banner-r15-c02.png",
+      "row": 15,
+      "column": 2,
+      "source_bounds": {
+        "x": 518,
+        "y": 1436,
+        "width": 499,
+        "height": 93
+      },
+      "path": "/home/manuel/workspaces/2025-12-21/echo-base-documentation/esp32-s3-m5/ttmp/2026/05/08/ALMANACH-IMAGE-BLOCKS--add-almanach-image-blocks-and-upload-support/various/grid-banners/pastoral/pastoral-banner-r15-c02.png"
+    }
+  ],
+  "count": 30
+}
