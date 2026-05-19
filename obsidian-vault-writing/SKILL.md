@@ -230,6 +230,7 @@ Use these rules strictly:
 - Use callouts sparingly but do include a `> [!summary]` callout when the note has 2-4 clear identities or themes.
 - Keep the note human-readable first. It should feel like durable project documentation or durable engineering knowledge, not an AI summary dump.
 - Treat vault-note work as append-only by default: do not delete or overwrite an existing note unless the user explicitly asks for that.
+- When the user asks for a project report in the parc Obsidian vault, commit the new/updated vault note and push the vault repository unless they explicitly say not to. Stage only the intended note/report files; do not include incidental Obsidian workspace changes such as `.obsidian/workspace.json` unless explicitly requested.
 ## Common Requests This Skill Should Handle
 
 - "Create a project note for this repo in my Obsidian vault."
