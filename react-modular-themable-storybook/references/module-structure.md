@@ -1,6 +1,98 @@
 # Module Structure
 
-## Suggested layout
+## Preferred design-system package layout
+
+For React projects with a reusable component system, use this layered `src/components` layout unless an existing project convention says otherwise:
+
+```
+src/
+  components/
+    foundation/
+      Text/
+        Text.tsx
+        Text.module.css
+        Text.stories.tsx
+        index.ts
+      Heading/
+        Heading.tsx
+        Heading.module.css
+        Heading.stories.tsx
+        index.ts
+      Caption/
+        Caption.tsx
+        Caption.module.css
+        Caption.stories.tsx
+        index.ts
+      Divider/
+        Divider.tsx
+        Divider.module.css
+        Divider.stories.tsx
+        index.ts
+      VisuallyHidden/
+        VisuallyHidden.tsx
+        VisuallyHidden.module.css
+        VisuallyHidden.stories.tsx
+        index.ts
+      Foundation.stories.tsx
+      index.ts
+    layout/
+      Section/
+      Container/
+      Grid/
+      Stack/
+      Split/
+      Surface/
+      index.ts
+    atoms/
+      Button/
+      Chip/
+      Icon/
+      index.ts
+    molecules/
+      SectionHeader/
+      ProductCard/
+      SearchBox/
+      index.ts
+    organisms/
+      Header/
+      Footer/
+      ProductGridSection/
+      WidgetShell/
+      index.ts
+    pages/
+      HomePage/
+      index.ts
+    index.ts
+```
+
+Layering rule:
+
+```
+tokens -> foundation -> layout/atoms -> molecules -> organisms -> pages
+```
+
+- `foundation` turns raw/semantic tokens into React APIs for typography, text tone, accessibility utilities, separators, and token documentation.
+- `layout` owns structural primitives and repeated composition recipes.
+- `atoms` are small product controls or visuals.
+- `molecules` are reusable combinations of foundation/layout/atoms.
+- `organisms` are full feature blocks, sections, widgets, or application chrome.
+- `pages` compose organisms and route/page data.
+- Public component folders should keep `XXX.tsx`, `XXX.module.css`, `XXX.stories.tsx`, and `index.ts` together so implementation, styling, documentation, and exports stay synchronized.
+
+Storybook should mirror the same mental model:
+
+```
+Design System/Foundation
+Design System/Layout
+Component Library/Atoms
+Component Library/Molecules
+Component Library/Organisms
+Applications/Pages
+```
+
+## Single-widget module layout
+
+For a standalone widget package, use this smaller module shape:
 
 ```
 src/

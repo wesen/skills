@@ -9,6 +9,47 @@ description: Build or refactor React UI into a modular, reusable, themeable, Sto
 
 Create a reusable React UI package with a stable public API, theme tokens, part-based styling hooks, and Storybook coverage. Use this to modularize an existing widget without changing behavior, while enabling custom styling and composition.
 
+## Standard React design-system decomposition
+
+When scaffolding or refactoring a React design-system package, prefer this stable layered layout unless the project already has a stronger convention:
+
+```text
+src/components/
+  foundation/  # tokens made usable in React: Text, Heading, Caption, Divider, VisuallyHidden
+  layout/      # structural primitives: Section, Container, Grid, Stack, Split, Surface
+  atoms/       # smallest product controls: Button, Chip, Icon, Badge
+  molecules/   # composed reusable UI: Card, SectionHeader, SearchBox
+  organisms/   # feature/section blocks: ProductGridSection, Header, Footer, Widget
+  pages/       # routed/page-level compositions
+```
+
+Ownership rule of thumb:
+
+```text
+tokens -> foundation -> layout/atoms -> molecules -> organisms -> pages
+```
+
+- `foundation` owns typography roles, text tones, accessibility helpers, separators, and token documentation stories.
+- `layout` owns repeated structural recipes and spacing/container/grid behavior.
+- `atoms` own small interactive or visual product controls.
+- `molecules` compose foundation/layout/atoms into reusable product UI.
+- `organisms` compose molecules into feature sections or widgets.
+- `pages` wire organisms into full experiences.
+- Every reusable component directory should include an `XXX.stories.tsx` file next to `XXX.tsx` and `XXX.module.css` unless the component is private implementation detail only.
+
+Keep Storybook hierarchy aligned with the same decomposition:
+
+```text
+Design System/Foundation
+Design System/Layout
+Component Library/Atoms
+Component Library/Molecules
+Component Library/Organisms
+Applications/Pages
+```
+
+Avoid collapsing these layers into a generic `Box`/style-prop system unless the project explicitly requires it.
+
 ## Workflow (high-level)
 
 1. Inventory the existing UI.
