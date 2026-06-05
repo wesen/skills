@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import re
 import shutil
 from pathlib import Path
 
@@ -20,6 +21,16 @@ def _should_treat_as_text(path: Path) -> bool:
     except OSError:
         return False
     return b"\x00" not in data
+
+
+def _go_package_name(value: str) -> str:
+    candidate = re.sub(r"[^A-Za-z0-9_]", "_", value.strip())
+    candidate = re.sub(r"_+", "_", candidate).strip("_")
+    if not candidate:
+        return "project"
+    if candidate[0].isdigit():
+        candidate = f"project_{candidate}"
+    return candidate
 
 
 def _copy_tree(
@@ -139,6 +150,7 @@ def main() -> int:
         "__TAP_OWNER__": args.tap_owner,
         "__TAP_REPO__": args.tap_repo,
         "__BREW_TAP__": args.brew_tap,
+        "__GO_PACKAGE_NAME__": _go_package_name(repo_name or args.project_name or args.binary),
     }
 
     readme_template = src_root / "README.md.template"

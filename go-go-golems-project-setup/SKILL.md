@@ -2,8 +2,9 @@
 name: go-go-golems-project-setup
 description: >-
   Scaffold or retrofit a go-go-golems Go repository with standard project plumbing:
-  Makefile targets, golangci-lint config, lefthook hooks, GitHub Actions
-  (unit/smoke/lint/security), and GoReleaser release setup (GitHub releases + Homebrew tap).
+  Makefile targets, pinned golangci-lint, glazed-lint, logcopter generation/checks,
+  lefthook hooks, GitHub Actions (unit/smoke/lint/security), and GoReleaser release setup
+  (GitHub releases + Homebrew tap).
   Use when creating a new go-go-golems Go CLI/library repo, renaming an existing module/binary
   to go-go-golems conventions, or making a repo “release-ready” with CI and GoReleaser.
 ---
@@ -12,7 +13,7 @@ description: >-
 
 ## Workflow
 
-Set up a Go project to match the common go-go-golems shape and release pipeline (CI + lint + GoReleaser + Homebrew tap). Prefer using the included scaffold script and templates so projects are consistent.
+Set up a Go project to match the common go-go-golems shape and release pipeline (CI + lint + logcopter + GoReleaser + Homebrew tap). Prefer using the included scaffold script and templates so projects are consistent.
 
 ### Inputs to decide up front
 
@@ -30,7 +31,7 @@ Use the scaffold script to copy standard files into the current repo and apply p
 1) Run:
 
 ```bash
-python3 /home/manuel/.codex/skills/go-go-golems-project-setup/scripts/scaffold.py \
+python3 /home/manuel/.pi/agent/skills/go-go-golems-project-setup/scripts/scaffold.py \
   --module github.com/go-go-golems/<repo> \
   --binary <binary> \
   --project-name <project_name> \
@@ -41,14 +42,19 @@ python3 /home/manuel/.codex/skills/go-go-golems-project-setup/scripts/scaffold.p
 2) Then run:
 
 ```bash
+go get -tool github.com/go-go-golems/logcopter/cmd/logcopter-gen@latest
 go mod tidy
+make logcopter-generate
+make logcopter-check
 make lint
-go test ./... -count=1
+make test
 ```
 
 Notes:
 
-- The scaffold copies `.github/workflows/*`, `.goreleaser.yaml`, `.golangci.yml`, `lefthook.yml`, `Makefile`, and a README template.
+- The scaffold copies `.github/workflows/*` when present, `.goreleaser.yaml`, `.golangci.yml`, `.golangci-lint-version`, `lefthook.yml`, `Makefile`, `logcopter_generate.go`, and a README template.
+- The Makefile defaults to pinned `golangci-lint` from `.golangci-lint-version`, builds `glazed-lint` from `github.com/go-go-golems/glazed/cmd/tools/glazed-lint`, and adds `logcopter-generate` / `logcopter-check` targets.
+- If the repo cannot load `./...` with `GOWORK=off`, narrow `GO_PACKAGES` temporarily and document the blocker in the Makefile until dependencies are fixed.
 - Adjust smoke tests in `.github/workflows/push.yml` to exercise real subcommands / a tiny e2e fixture for your project.
 
 ### Step 2 — Wire the actual CLI/library

@@ -1,0 +1,3 @@
+package __GO_PACKAGE_NAME__
+
+//go:generate go tool logcopter-gen -area-prefix go-go-golems.__REPO_NAME__ -strip-prefix __MODULE__ ./cmd/... ./internal/... ./pkg/...
