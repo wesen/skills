@@ -45,7 +45,37 @@ The remote service runs on the crib k3s cluster (Proxmox host at 192.168.0.225),
 
 ## Print Workflow
 
-### 1. Print a YAML layout (CLI)
+### 1. Preferred: print through the crib remote service
+
+Use the `print-remote` verb. It loads YAML/JSON or ZIP layout bundles locally, converts them to the JSON expected by the service, and POSTs to `https://almanach.crib.scapegoat.dev/api/render-and-print`. This avoids hand-written YAML-to-JSON HTTP pipelines and uses the remote service on the same LAN as the printer.
+
+```bash
+cd ~/code/wesen/go-go-golems/almanach
+./dist/almanach-render-service print-remote \
+  --layout path/to/layout.yaml \
+  --output yaml
+```
+
+Dry-run against the remote render endpoint without printing:
+
+```bash
+./dist/almanach-render-service print-remote \
+  --layout path/to/layout.yaml \
+  --dry-run \
+  --output yaml
+```
+
+Use ZIP bundles when local image assets should be inlined automatically:
+
+```bash
+./dist/almanach-render-service print-remote \
+  --layout layout-bundle.zip \
+  --output yaml
+```
+
+### 2. Local direct printer path (fallback)
+
+Use this only when the remote service is unavailable or when explicitly testing the direct ESP32 printer endpoint. Direct local printing renders with local Chrome and POSTs the bitmap to the printer IP.
 
 ```bash
 cd ~/code/wesen/go-go-golems/almanach
@@ -53,45 +83,58 @@ cd ~/code/wesen/go-go-golems/almanach
   --layout path/to/layout.yaml \
   --printer-ip 192.168.0.126 \
   --feed-lines 8 \
+  --web-dir ~/code/wesen/go-go-golems/almanach/web/dist \
   --output yaml
 ```
 
-### 2. Print a YAML layout (remote HTTP API)
-
-Convert the YAML to JSON and POST it:
-
-```bash
-cat layout.yaml | python3 -c "import sys,yaml,json; print(json.dumps(yaml.safe_load(sys.stdin)))" | \
-  curl -sk -X POST https://almanach.crib.scapegoat.dev/api/render-and-print \
-  -H "Content-Type: application/json" \
-  -d @-
-```
-
-### 3. Print a YAML layout (local HTTP API)
-
-```bash
-cat layout.yaml | python3 -c "import sys,yaml,json; print(json.dumps(yaml.safe_load(sys.stdin)))" | \
-  curl -s -X POST http://localhost:8199/api/render-and-print \
-  -H "Content-Type: application/json" \
-  -d @-
-```
-
-### 4. Render a preview (no print)
+### 3. Render a preview (no print)
 
 ```bash
 ./dist/almanach-render-service render \
   --layout layout.yaml \
   --out /tmp/preview.png \
+  --web-dir ~/code/wesen/go-go-golems/almanach/web/dist \
   --output yaml
 ```
 
-### 5. Inspect layout metrics
+### 4. Inspect layout metrics
 
 ```bash
 ./dist/almanach-render-service inspect \
   --layout layout.yaml \
   --output yaml
 ```
+
+### 5. Render from a template with data context
+
+Layout files can contain `{{variable}}` expressions that are resolved from a separate data context file or inline flags:
+
+```bash
+# From a template + data file
+./dist/almanach-render-service print-remote \
+  --layout path/to/template.yaml \
+  --data path/to/data.yaml \
+  --output yaml
+
+# With inline variable override
+./dist/almanach-render-service render \
+  --layout template.yaml \
+  --data data.yaml \
+  --define "title=OVERRIDE TITLE" \
+  --out /tmp/preview.png
+
+# Inline only (no data file). Multiple values are comma-separated in one flag.
+./dist/almanach-render-service render \
+  --layout template.yaml \
+  --define "title=HELLO,date=May 26, 2026" \
+  --out /tmp/preview.png
+```
+
+Template expressions: `{{key}}` (required), `{{key:fallback}}` (with default), `{{$ENV_VAR}}` (from environment), `{{$ENV_VAR:fallback}}` (environment with fallback). Use `--define`, not `-D`; no short `-D` alias exists. Inline defines override values loaded from `--data`.
+
+When no `--data` or `--define` is provided, template resolution is skipped entirely, so literal `{{...}}` strings remain unchanged. Almanach no longer fetches or invents content: YAML/layout files and explicit data contexts are the only content sources. If no layout is supplied, the app renders only the minimal scaffold (title + date).
+
+See `examples/templates/` for ready-to-use template + data context pairs.
 
 ## Pairing Workflow
 
@@ -132,7 +175,15 @@ Long-press the AtomS3R button until the reset threshold. The firmware clears WiF
 
 ## Layout Format
 
-YAML layouts describe a thermal paper page as blocks. For the **full field reference** with every block type and its data fields, see:
+YAML layouts describe a thermal paper page as blocks. For knowledge-strip or technical-summary prints, prefer a readable almanach rhythm instead of dense text-only output:
+
+- Use `bodyScale: 1.42` by default for readable technical almanachs. Use `bodyScale: 1.3` only when the page is too long or the user asks for a more compact print. Avoid going much larger unless the page is very short.
+- Include one `image` block for visual rhythm unless the user explicitly asks for text-only. The bundled image library works well; `animals-grid/owl.png`, `animals-grid/fox.png`, and `marine/lighthouse.png` are good generic technical-summary choices.
+- Keep `word` block `word` values short — roughly 16 characters maximum. Use `context`, `call ctx`, `owner`, or `runtime`, not package-qualified identifiers like `runtimebridge.CurrentContext(vm)`.
+- Put long API names, function signatures, URLs, and code identifiers in `note` blocks rather than `word` blocks.
+- For final print copies, prefer `feedLines: 8` so there is enough tear-off paper.
+
+For the **full field reference** with every block type and its data fields, see:
 
 ```bash
 almanach-render-service help layout-dsl-reference
@@ -149,8 +200,8 @@ Quick-start example:
 almanach_studio_version: 1
 theme: minimal
 paperWidth: 384
-bodyScale: 1.45
-feedLines: 3
+bodyScale: 1.42
+feedLines: 8
 blocks:
   - id: title-1
     type: title
@@ -168,6 +219,11 @@ blocks:
       label: Notes
       text: Some text here
       author: Author
+  - id: word-1
+    type: word
+    data:
+      word: context
+      definition: Short word fields fit the thermal width better.
   - id: quote-1
     type: quote
     data:
@@ -191,22 +247,24 @@ Use `image` to embed a photograph or illustration. Images must be provided as UR
     src: data:image/jpeg;base64,/9j/4AAQ...
     alt: A botanical engraving
     caption: Optional caption text
-    height: 100
+    height: 160
     fit: cover
     border: true
     grayscale: true
+    thermalTone: normal
 ```
 
-| Data field | Type | Description |
-|---|---|---|
-| `label` | string | Section heading above the image. |
-| `src` | string | Image URL or `data:image/...;base64,...` data URL. |
-| `alt` | string | Alt text. |
-| `caption` | string | Caption below the image. |
-| `height` | integer | Image height in pixels within the layout. |
-| `fit` | string | CSS `object-fit`: `cover`, `contain`, or `fill`. |
-| `border` | boolean | Draw a border around the image. |
-| `grayscale` | boolean | Render in grayscale (better for thermal printing). |
+| Data field | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | `"Image Plate"` | Section heading above the image. |
+| `src` | string | `""` | Image URL or `data:image/...;base64,...` data URL. Required. |
+| `alt` | string | `""` | Alt text. Falls back to `caption`. |
+| `caption` | string | `""` | Caption below the image. |
+| `height` | integer | `160` | Image height in pixels, clamped 48–420. |
+| `fit` | string | `"cover"` | CSS `object-fit`: `cover` (fill, crop) or `contain` (fit, letterbox). |
+| `border` | boolean | `true` | Draw a border around the image. |
+| `grayscale` | boolean | `true` | Render in grayscale (better for thermal printing). |
+| `thermalTone` | string | `"normal"` | Tone preset: `normal` (high contrast) or `light` (brighter, for faint source images). |
 
 To embed a local image file as a data URL:
 
@@ -252,7 +310,7 @@ DATA_URL=$(python3 -c "import base64,sys; print('data:image/png;base64,' + base6
 | Binary | `~/code/wesen/go-go-golems/almanach/dist/almanach-render-service` |
 | State file | `~/.config/almanach/render-service/state.json` |
 | crib-k3s manifests | `~/code/wesen/crib-k3s/gitops/kustomize/almanach/` |
-| Docker image | `ghcr.io/go-go-golems/almanach-render-service:latest` |
+| Docker image | `ghcr.io/go-go-golems/almanach:sha-<commit>` (GitOps-managed immutable tag) |
 | Example layouts | `~/code/wesen/go-go-golems/almanach/examples/layouts/` |
 | Firmware | `~/code/wesen/go-go-golems/almanach/firmware/atoms3r/` |
 | Image library | `~/.pi/agent/skills/almanach-printing/images/` |

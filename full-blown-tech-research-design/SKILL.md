@@ -32,7 +32,7 @@ The final ticket should contain:
 8. `docmgr doctor` passing, or a clearly documented reason if it cannot pass.
 9. Optional reMarkable upload when requested.
 
-The design document should read like an engineering textbook plus implementation RFC: prose paragraphs, diagrams, tables, API sketches, pseudocode, file references, and concrete validation commands.
+The design document should read like an engineering textbook plus implementation RFC: prose paragraphs, diagrams, tables, API sketches, pseudocode, file references, concrete validation commands, and explicit decision records for major choices.
 
 ## Workflow
 
@@ -167,12 +167,13 @@ Use this structure unless the user asks for another shape:
 5. **System overview** — components, responsibilities, and diagrams.
 6. **Data/model design** — schemas, state boundaries, lifecycle, persistence.
 7. **API design** — HTTP/RPC/CLI/library interfaces, request/response examples, types.
-8. **Core flows** — step-by-step runtime flows with sequence diagrams or pseudocode.
-9. **Implementation plan** — phased, file-level guidance for a new intern.
-10. **Testing and validation strategy** — unit/integration/manual/smoke/security/perf tests.
-11. **Risks, alternatives, and open questions** — be explicit and non-handwavy.
-12. **Intern onboarding checklist** — what to read first, what to run first, where to edit first.
-13. **References** — local source docs, cloned repo files, experiments, external URLs.
+8. **Decision records** — compact records for major architecture/API choices: context, options, decision, rationale, consequences, status.
+9. **Core flows** — step-by-step runtime flows with sequence diagrams or pseudocode.
+10. **Implementation plan** — phased, file-level guidance for a new intern.
+11. **Testing and validation strategy** — unit/integration/manual/smoke/security/perf tests.
+12. **Risks, alternatives, and open questions** — be explicit and non-handwavy.
+13. **Intern onboarding checklist** — what to read first, what to run first, where to edit first.
+14. **References** — local source docs, cloned repo files, experiments, external URLs.
 
 Writing rules:
 
@@ -180,6 +181,7 @@ Writing rules:
 - Prefer concrete APIs, types, and pseudocode over vague recommendations.
 - Use diagrams for boundaries and flows.
 - Use tables for tradeoffs and component responsibilities.
+- Add decision records whenever a recommendation chooses between viable alternatives.
 - Cite local files and line ranges for major claims.
 - Distinguish “observed in source/docs” from “recommended design inference.”
 - Call out maturity/security warnings prominently.

@@ -66,18 +66,22 @@ Write one comprehensive design doc with:
 3. Current-state architecture (evidence-based).
 4. Gap analysis against requested outcomes.
 5. Proposed solution with API references and pseudocode.
-6. Phased implementation plan (file-level guidance).
-7. Testing and validation strategy.
-8. Risks, alternatives, and open questions.
-9. References list of key files.
+6. Decision records for major architecture/API choices.
+7. Phased implementation plan (file-level guidance).
+8. Testing and validation strategy.
+9. Risks, alternatives, and open questions.
+10. References list of key files.
 
 Writing requirements:
 
 1. Optimize for onboarding unfamiliar engineers.
 2. Be explicit, structured, and concrete.
 3. Explain tradeoffs, not just chosen direction.
-4. Include pseudocode and minimal API sketches where useful.
-5. Keep tone factual and implementation-focused.
+4. Include compact decision records when a design chooses between viable alternatives.
+5. Include pseudocode and minimal API sketches where useful.
+6. Keep tone factual and implementation-focused.
+
+Decision records should state context, options considered, decision, rationale, consequences, and status (`proposed`, `accepted`, or `superseded`). Use them for major representation, API, runtime, security, generated-code, integration, or compatibility choices.
 
 See `references/writing-style.md`.
 

@@ -25,6 +25,8 @@ This skill guides the creation of high-quality technical textbooks in Peter Norv
 
 **Concrete over abstract.** Whenever possible, show real code, real output, real trace lines. Abstract descriptions of patterns are useful, but they land better when grounded in something the reader can see and run.
 
+**No analogies.** Explain technical systems directly in their own terms. Do not use metaphors such as kitchens, traffic cops, rooms, doors, trains, factories, or other story-like comparisons. If a concept is difficult, clarify it with precise definitions, state diagrams, sequence diagrams, code, and concrete traces instead.
+
 **Breaks in the rhythm.** Use code blocks, tables, diagrams, and bullet points strategically to break up long passages of prose. These aren't decorations—they are part of the argument. A table comparing two approaches does work that prose cannot.
 
 **The reader is capable.** Do not talk down to the reader. Assume they are intelligent and can follow complex ideas if presented clearly. Do not qualify every statement with "of course" or "clearly" or "it goes without saying." Let the ideas speak.
@@ -120,6 +122,16 @@ Notice:
 **Why it's bad:** "Of course," "clearly," and "it goes without saying" are filler that imply the writer is uncertain. If something is obvious, just say it without the qualifier.
 
 **Fix:** "Ordinals define event order. If you know ordinals 1 through 5 have been published, you know the order in which things happened."
+
+---
+
+**AI Slop Pattern 6: Analogies instead of precise explanation**
+
+> "Think of the runtime as a kitchen with one cook and the scheduler as the kitchen manager."
+
+**Why it's bad:** Analogies hide important technical details and often break down exactly where precision matters. They can make concurrency, ownership, and cancellation semantics feel simpler than they are.
+
+**Fix:** Define the actual entities and transitions. "A `goja.Runtime` must be accessed by one goroutine at a time. `runtimeowner.Runner.Call` serializes VM access by scheduling callbacks onto the event loop and associating each callback with a context."
 
 ---
 

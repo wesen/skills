@@ -319,6 +319,29 @@ Practical rule: if you type `myapp <group> <verb> ...`, then `<group>` should be
 - **Output defaults**: use `settings.WithOutputSectionOptions` on `settings.NewGlazedSchema`.
 - **Help frontmatter**: quote strings with colons.
 - **Duplicate flags**: don’t add the same section to both parent and child commands.
+- **`types.NewRow` returns a `Row` value, not `*Row`**; `middlewares.Processor.AddRow(ctx, row)` takes a `Row` value. Don’t declare helper functions returning `*types.Row` — they won’t satisfy `AddRow`. (See `glaze help sections-and-values` / `building-custom-processors`.)
+- **Variadic positional args need `fields.TypeStringList`** (or `TypeIntegerList`) with `fields.WithIsArgument(true)`, as the *last* argument; only one list arg is allowed. A single `TypeString` positional takes exactly one value. (See `glaze help parsing-fields` / `usage-string`.)
+
+## Discover More: `glaze help`
+
+This skill is a quick-start, not the whole API. The `glaze` binary ships a help system with topic pages that cover the finer details — run it to discover everything:
+
+```bash
+glaze help --all          # list every topic + example
+glaze help <topic>        # read one page (e.g. `glaze help parsing-fields`)
+glaze help --ui           # interactive TUI browser
+```
+
+When the skeleton above doesn’t answer a question, the help page usually does. Curated topics for advanced authoring (don’t preload these — read on demand):
+
+- `parsing-fields` / `adding-field-types` — all field types (`TypeStringList`, `TypeChoiceList`, `TypeStringListFromFile`, …) and how to define new ones.
+- `usage-string` — how positional args render in the cobra usage line (`<name>` vs `[names...]`).
+- `sections-and-values` / `sections-guide` — `values.Values`, `DecodeSectionInto`, `schema.DefaultSlug`, and composing custom sections.
+- `building-custom-processors` — the `middlewares.Processor` / `AddRow` contract and custom output middlewares.
+- `commands-reference` — `cli.BuildCobraCommand` vs `BuildCobraCommandFromCommand`, parser configs, and the full command lifecycle.
+- `flag-groups` / `profiles` / `config-files` — flag grouping, profile/config precedence, and overlays.
+- `writing-help-entries` / `how-to-write-good-documentation-pages` — authoring embedded help docs and frontmatter.
+- `logging-section-reference` — the logging section API (beyond the root snippet above).
 
 ## Reference: Read these when needed
 
