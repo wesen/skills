@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+printf 'warning: legacy fallback; prefer go-minitrace discover pi --cwd-contains ... --output json\n' >&2
+
 TARGET_CWD="${1:?usage: discover_pi_by_cwd.sh <cwd> [source_root] [limit]}"
 SOURCE_ROOT="${2:-$HOME/.pi/agent/sessions}"
 LIMIT="${3:-20}"

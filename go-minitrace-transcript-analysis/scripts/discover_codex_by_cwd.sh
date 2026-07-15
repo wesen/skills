@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+printf 'warning: legacy fallback; prefer go-minitrace discover codex --cwd-contains ... --output json\n' >&2
+
 TARGET_CWD="${1:?usage: discover_codex_by_cwd.sh <cwd> [source_root] [limit]}"
 SOURCE_ROOT="${2:-$HOME/.codex/sessions}"
 LIMIT="${3:-20}"

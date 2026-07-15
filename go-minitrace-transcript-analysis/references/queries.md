@@ -39,6 +39,10 @@ Key `sessions` columns: `session_id`, `title`, `agent_framework`,
 `modify_count`, `create_count`, `execute_count`, `git_branch`, `source_path`,
 `raw_json` (full original document, for long-tail fields).
 
+Treat `sessions.source_path` as importer/archive provenance, not necessarily the
+original native JSONL path. Preserve discovery output and source-list files when
+native provenance matters.
+
 Key `turns` columns: `session_id`, `turn_index`, `timestamp`, `role`,
 `content`, `model`, `thinking`, `input_tokens`, `output_tokens`.
 
@@ -154,6 +158,204 @@ SELECT s.session_id,
 FROM sessions s
 ORDER BY last_turn_at DESC;
 ```
+
+## Build a portable command-text view
+
+Pi commonly populates `tool_calls.command`. Some Codex adapters leave that
+column empty and retain the command or wrapper source in `arguments_json`.
+Use a CTE that preserves both the normalized columns and the serialized
+arguments:
+
+```sql
+WITH calls AS (
+  SELECT
+    session_id,
+    emitting_turn_index AS turn_index,
+    tool_call_id,
+    tool_name,
+    operation_type,
+    success AS transport_success,
+    exit_code AS normalized_exit_code,
+    file_path,
+    coalesce(
+      nullif(command, ''),
+      json_extract(arguments_json, '$.command'),
+      json_extract(arguments_json, '$.cmd'),
+      json_extract(arguments_json, '$.input'),
+      arguments_json
+    ) AS command_text,
+    arguments_json,
+    result,
+    error
+  FROM tool_calls
+)
+SELECT *
+FROM calls
+ORDER BY session_id, turn_index;
+```
+
+For wrapped Codex exec calls, `transport_success = 1` may mean only that the
+outer tool call completed. The nested subprocess exit code may be encoded in
+`result` while `normalized_exit_code` remains null.
+
+## Find exact repository activity
+
+Replace the example path with a distinctive absolute repository path. This
+query finds candidates; it does not prove that every returned operation
+succeeded.
+
+```sql
+WITH calls AS (
+  SELECT
+    session_id,
+    emitting_turn_index AS turn_index,
+    tool_name,
+    operation_type,
+    success,
+    exit_code,
+    coalesce(nullif(command, ''),
+             json_extract(arguments_json, '$.input'),
+             arguments_json) AS command_text,
+    file_path,
+    result,
+    error
+  FROM tool_calls
+)
+SELECT *
+FROM calls
+WHERE coalesce(command_text, '')
+        LIKE '%/home/manuel/workspaces/example/repository%'
+   OR coalesce(file_path, '')
+        LIKE '%/home/manuel/workspaces/example/repository%'
+ORDER BY session_id, turn_index;
+```
+
+## Find commit command candidates without claiming success
+
+Do not use a raw `arguments_json LIKE '%git commit%'` count as the number of
+Git commits. Restrict to shell/exec tools and retain result fields for review:
+
+```sql
+WITH exec_calls AS (
+  SELECT
+    session_id,
+    emitting_turn_index AS turn_index,
+    tool_call_id,
+    tool_name,
+    success AS transport_success,
+    exit_code AS normalized_exit_code,
+    coalesce(nullif(command, ''),
+             json_extract(arguments_json, '$.command'),
+             json_extract(arguments_json, '$.cmd'),
+             json_extract(arguments_json, '$.input'),
+             arguments_json) AS command_text,
+    result,
+    error
+  FROM tool_calls
+  WHERE tool_name IN ('bash', 'exec', 'exec_command', 'shell')
+)
+SELECT *
+FROM exec_calls
+WHERE command_text LIKE '%git commit%'
+ORDER BY session_id, turn_index;
+```
+
+Classify the output into four distinct quantities:
+
+1. serialized rows containing `git commit`;
+2. actual command attempts;
+3. attempts with confirmed nested exit status zero;
+4. resulting hashes verified with `git -C <repo> show`.
+
+Only the fourth quantity is a repository-verified commit count.
+
+## Find exact file creation or patch evidence
+
+For Codex patch wrappers, the path may exist only in `arguments_json`:
+
+```sql
+SELECT
+  session_id,
+  emitting_turn_index AS turn_index,
+  tool_name,
+  operation_type,
+  success,
+  file_path,
+  substr(arguments_json, 1, 2000) AS arguments,
+  substr(result, 1, 1000) AS result
+FROM tool_calls
+WHERE coalesce(file_path, '') LIKE '%pkg/example/target.go%'
+   OR arguments_json LIKE '%pkg/example/target.go%'
+ORDER BY session_id, turn_index;
+```
+
+Inspect nearby turns before deciding whether the path was written, quoted,
+reviewed, or merely searched.
+
+## Role-classification profile
+
+This aggregate helps identify sessions that mention a target but perform little
+observable work. Adapter limitations mean the result is a shortlist, not a
+final role assignment.
+
+```sql
+SELECT
+  s.session_id,
+  s.agent_framework,
+  s.model,
+  s.working_directory,
+  s.turn_count,
+  s.tool_call_count,
+  SUM(CASE WHEN tc.operation_type = 'READ' THEN 1 ELSE 0 END) AS reads,
+  SUM(CASE WHEN tc.operation_type IN ('NEW', 'MODIFY') THEN 1 ELSE 0 END)
+    AS normalized_writes,
+  SUM(CASE WHEN tc.tool_name IN ('bash', 'exec', 'exec_command', 'shell')
+           THEN 1 ELSE 0 END) AS exec_calls
+FROM sessions s
+LEFT JOIN tool_calls tc USING (session_id)
+GROUP BY s.session_id, s.agent_framework, s.model, s.working_directory,
+         s.turn_count, s.tool_call_count
+ORDER BY normalized_writes DESC, exec_calls DESC, s.tool_call_count DESC;
+```
+
+A review session can have high topic counts and almost no emitted tool calls.
+A long-lived implementer can have a misleading original cwd. Confirm roles with
+exact operations and external repository state.
+
+## Evaluate diary timing
+
+When a worker was required to maintain a diary, identify diary writes in the
+worker's converted Pi transcript:
+
+```sql
+SELECT
+  session_id,
+  emitting_turn_index AS turn_index,
+  tool_name,
+  success,
+  file_path,
+  substr(coalesce(command, arguments_json, ''), 1, 500) AS invocation
+FROM tool_calls
+WHERE coalesce(file_path, '') LIKE '%diary.md%'
+   OR coalesce(command, arguments_json, '') LIKE '%diary.md%'
+ORDER BY session_id, turn_index;
+```
+
+Compare write timestamps with the events described in each checkpoint. A diary
+written correctly at the end can still have poor contemporaneous fidelity.
+
+## Adapter and identity caveats
+
+- Native Codex child sessions can have unique `payload.id` values while the
+  converter normalizes them to a shared parent thread ID. Audit native sources
+  before conversion and use separate output directories when necessary.
+- `operation_type = OTHER` does not prove that a Codex call was read-only.
+- Empty `command`, `file_path`, or `exit_code` columns do not prove the native
+  field is absent; inspect `arguments_json`, `result`, and `raw_json`.
+- A tool-call `success` value can describe transport success rather than nested
+  process success.
+- Text in a user turn or tool argument may quote another transcript. Emitted
+  repository-changing tool calls carry more attribution weight than mentions.
 
 ## Migrating legacy DuckDB SQL
 

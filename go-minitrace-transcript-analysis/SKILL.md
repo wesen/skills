@@ -1,283 +1,341 @@
 ---
 name: go-minitrace-transcript-analysis
-description: Use when analyzing previous Pi or Codex coding-agent transcripts with go-minitrace, especially to find sessions by repo/date, convert targeted subsets into minitrace archives, run normalized-SQLite queries (`query run`), and summarize findings with concrete evidence and caveats.
+description: Use when analyzing previous Pi or Codex coding-agent transcripts with go-minitrace, especially to find sessions by repository/date, attribute implementation work to a session, convert targeted native JSONL sources, query normalized SQLite tables, compare agent behavior, and report evidence with explicit caveats.
 ---
 
 # go-minitrace Transcript Analysis
 
-## Overview
+## Purpose
 
-Use this skill when the user wants to inspect prior coding-agent sessions, compare Pi and Codex behavior, or build summaries from transcript archives instead of reading raw JSONL manually.
+Use this skill to turn native coding-agent session logs into a small, reproducible body of evidence. The standard sequence is:
 
-Keep the workflow evidence-first:
+1. Define the question and evidence standard.
+2. Inspect the installed CLI help for the commands you will use.
+3. Discover and shortlist native sessions.
+4. Convert only the required source files.
+5. Query normalized SQLite tables with saved SQL.
+6. Reopen relevant transcript context and external state.
+7. Report observations, inferences, alternatives, and caveats separately.
 
-1. Discover candidate native sessions.
-2. Narrow by repository and time window before conversion.
-3. Convert only the subset you need.
-4. Query the resulting `.minitrace.json` files with the normalized SQLite engine (`query run`).
-5. Summarize findings with explicit caveats.
+Raw grep is a candidate-selection tool, not the final analytical method. A cwd match, filename, title, or topic count is never sufficient proof that a session implemented a change.
 
-Read `references/queries.md` before writing custom SQL — it contains the normalized schema, ready-made SQLite queries, and a migration table for any legacy DuckDB SQL.
+The legacy DuckDB backend (`go-minitrace query duckdb`) is removed. Use `go-minitrace query run` and the normalized SQLite schema.
 
-Before inventing a query or command from scratch, use `go-minitrace help` to discover what is already embedded. The help tree includes both normalized SQLite query guidance and reusable structured query commands, so future users should prefer the built-ins first and only fall back to custom SQL when necessary.
+## Load references selectively
 
-> **Note:** The legacy DuckDB backend (`go-minitrace query duckdb`) has been removed. All SQL now runs on a normalized SQLite engine via `go-minitrace query run`. Anywhere older docs/scripts say `query duckdb`, use `query run` instead. `go-minitrace help query-duckdb` is now a migration guide, not a command.
+- Read `references/queries.md` before custom SQL. It documents the normalized schema, adapter caveats, and verified query patterns.
+- Read `references/attribution.md` when determining which session implemented repository work, authored commits, or created files.
+- Read `references/js-query-authoring.md` only when the analysis should become a reusable JavaScript query command. Most investigations need saved SQL, not a JS command repository.
 
 ## Native stores
 
-- Codex sessions usually live under `~/.codex/sessions/YYYY/MM/DD/*.jsonl`.
-- Pi sessions usually live under `~/.pi/agent/sessions/--slugged-cwd--/*.jsonl`.
+- Codex: `~/.codex/sessions/YYYY/MM/DD/*.jsonl`
+- Pi: `~/.pi/agent/sessions/--slugged-cwd--/*.jsonl`
 
-## Important caveats
+Never modify native session files. Convert them into an investigation-specific output directory.
 
-- **`discover pi --cwd-contains <repo>` has a blind spot for workspace-launched sessions.** It matches only on the session's recorded `cwd`. If the work was done *from a workspace dir* (e.g. `/home/manuel/workspaces/2026-06-20/ui-notebook-package`) rather than the repo dir itself, `--cwd-contains go-go-goja` returns nothing even though the session is heavily about that repo. The reliable fallback is to `rg -l <topic>` the raw JSONL to shortlist candidates, then convert that shortlist with `convert pi --source-list` (see step 3).
-- `go-minitrace discover codex` does **not** expose the session working directory. For repo-specific filtering, inspect the first JSONL line and read `payload.cwd`.
-- `go-minitrace convert codex` accepts only `--source-dir`, not `--source-session`. To convert a narrow Codex subset, stage matching JSONL files into a temporary `.codex/sessions/...` tree first.
-- `go-minitrace convert pi` supports `--source-dir`, `--source-session` (repeatable), and `--source-list <file>` (newline-separated paths). Prefer `--source-list` for a narrow subset instead of staging a temp dir. Repeated `--source-session` calls into the same output dir can leave manifests reflecting only the last invocation; the `.minitrace.json` files are still queryable, so prefer querying the file glob directly or converting the whole set in one `--source-dir`/`--source-list` command when manifests matter.
-- `go-minitrace query run` builds/reuses a normalized SQLite DB from the archive glob automatically — there is no separate import step. Schema introspection via `sqlite_master` is blocked by the sandbox; use `go-minitrace help minitrace-schema` or `db.tables()`/`db.schema()` from JS instead.
+## Required command preflight
+
+Do not trust remembered flags or stale skill prose over the installed CLI. Before discovery and conversion, run command-specific help for the paths you will use:
+
+```bash
+go-minitrace discover pi --help
+go-minitrace discover codex --help
+go-minitrace convert pi --help
+go-minitrace convert codex --help
+go-minitrace query run --help
+go-minitrace help minitrace-schema
+```
+
+For broader analysis options:
+
+```bash
+go-minitrace help query-commands
+go-minitrace help query-recipes
+go-minitrace help writing-queries
+```
+
+If the help output contradicts this skill, follow the installed CLI and record the skill drift as a finding.
+
+## Current behavior and caveats
+
+### Discovery
+
+Both `discover pi` and `discover codex` expose `cwd` when the native source records it, and both support `--cwd-contains`.
+
+Cwd is a shortlist signal, not a content index. Relevant work may be hidden when:
+
+- a session starts from a workspace or parent directory;
+- a long-lived session later works in another repository;
+- a Codex parent spawns subagents in another cwd;
+- a review or investigation session uses the target cwd without implementing anything.
+
+When cwd discovery misses relevant work, use exact content signatures to shortlist raw JSONL files, then convert the shortlist. Prefer exact paths, commit hashes, ticket IDs, symbols, and unusual phrases over broad topic words.
+
+### Conversion
+
+Both Pi and Codex conversion currently support:
+
+- `--source-dir`
+- repeatable `--source-session`
+- `--source-list <file>`
+
+Prefer one `--source-list` conversion for a narrow set. Save the source list as an investigation artifact.
+
+### Codex parent/subagent identity collision
+
+Native Codex subagent files have their own `payload.id`, but may also record:
+
+```text
+payload.source.subagent.thread_spawn.parent_thread_id
+```
+
+The current Codex converter can normalize a child source to the parent thread identity. Converting a parent and several children into one output directory can therefore produce the same `.minitrace.json` path and overwrite or collapse outputs even though the native IDs are distinct.
+
+Before converting a Codex shortlist, run:
+
+```bash
+scripts/audit_codex_sources.sh ./sessions.txt
+```
+
+If several sources map to one effective normalized identity, either:
+
+1. select the authoritative source required by the question; or
+2. convert each source into a separate output directory and query all directories explicitly.
+
+After conversion, compare source count, archive count, manifests, `session_id`, and source provenance. A broader archive glob cannot recover a source that was already overwritten.
+
+### Normalized adapter limitations
+
+For some Codex transcripts:
+
+- `operation_type` is `OTHER` for exec and patch operations;
+- `command`, `file_path`, or `exit_code` may be empty;
+- commands, workdirs, and patch targets remain in `arguments_json`;
+- a nested subprocess exit code remains in `result`;
+- `success = 1` may mean only that the outer tool transport succeeded.
+
+Inspect `arguments_json`, `result`, and the native transcript before concluding that an operation did not occur or succeeded. Verify commits and files against the repository itself.
+
+### Query engine
+
+`go-minitrace query run` builds or reuses a normalized SQLite database from archive globs automatically. There is no separate import step. The main tables are `sessions`, `turns`, `tool_calls`, `annotations`, `metrics`, `files`, `events`, `attachments`, and `handovers`.
+
+Schema introspection through `sqlite_master` is blocked by the query sandbox. Use `go-minitrace help minitrace-schema` or `db.tables()` / `db.schema()` from a JS handler.
 
 ## Workflow
 
-### 0. Use the built-in help tree first
+### 1. Define the question and acceptance evidence
 
-The fastest way to avoid re-deriving existing analysis paths is to inspect the embedded help pages:
+Write down what would prove the answer before searching. Examples:
 
-- `go-minitrace help query-commands` — choose between ad hoc SQL (`query run`) and reusable structured commands (`query commands`)
-- `go-minitrace help query-recipes` — ready-made SQLite examples for common questions (replaces the removed `duckdb-query-recipes`)
-- `go-minitrace help writing-queries` — SQLite JSON operators, the normalized schema, and query patterns (replaces the removed `writing-duckdb-queries`)
-- `go-minitrace help query-duckdb` — **migration guide only**: how to rewrite legacy DuckDB SQL for the normalized SQLite schema
-- `go-minitrace help structured-query-commands` — how repository-backed query commands are discovered, named, and run
-- `go-minitrace query commands --help` — list the embedded command groups currently available
-- `go-minitrace query commands overview session-list --help` — inspect one embedded command’s flags and usage
+- exact session ID and native source path;
+- repository commit hash and timestamp correlation;
+- patch/write operations against specific files;
+- exact user instruction and relevant turn range;
+- test commands and results;
+- evidence that alternatives were review-only or reference-only.
 
-The embedded catalog currently includes examples such as:
-
-- `go-minitrace query commands overview session-list`
-- `go-minitrace query commands overview framework-summary`
-- `go-minitrace query commands timing timing-analysis`
-- `go-minitrace query commands overview aliases codex-framework-summary`
-
-Use `go-minitrace query run` for quick ad hoc SQL analysis, and `go-minitrace query commands` when the analysis should become a named, reusable command with typed flags and web-UI support.
-
-### 1. Discover recent sessions for one repository
-
-For a quick first pass, use `rg -l` against the transcript trees to shortlist likely matches before doing anything heavier. These JSONL files are verbose and large, so a filename/content grep is the fastest way to identify candidate sessions. Use the grep only to narrow the candidate set; once you have the right transcripts, switch to tailored `go-minitrace` discovery/query commands instead of continuing to grep indiscriminately.
-
-Use the bundled scripts:
-
-- `scripts/discover_codex_by_cwd.sh`
-- `scripts/discover_pi_by_cwd.sh`
-
-These emit tab-separated rows with session id, timestamp, size, and source path.
-
-### 2. Stage Codex sessions when you need repo/date filtering
-
-Use `scripts/stage_codex_by_cwd.sh` to build a temporary `.codex`-shaped tree containing only matching JSONL files.
-
-Then convert that staged tree:
+Create a working directory with saved inputs and queries:
 
 ```bash
-go-minitrace convert codex --source-dir /tmp/staged-codex-home --output-dir ./analysis/codex
+mkdir -p ./analysis ./queries ./results
 ```
 
-### 3. Convert Pi sessions
+### 2. Establish external state first
 
-For a repo-specific Pi directory:
+For repository attribution, inspect Git history and current changes before transcript discovery:
 
 ```bash
-go-minitrace convert pi --source-dir ~/.pi/agent/sessions/--slugged-cwd-- --output-dir ./analysis/pi
+git -C "$REPO" log \
+  --since="$SINCE" \
+  --date=iso-strict \
+  --pretty='%H%x09%aI%x09%s' \
+  --name-status
+
+git -C "$REPO" status --short
+git -C "$REPO" diff --name-only
 ```
 
-For a narrow subset (e.g. sessions shortlisted by an `rg` grep, or one per workspace dir), prefer `--source-list` over staging a temp dir:
+Extract distinctive signatures: full hashes, commit subjects, changed paths, symbols, ticket IDs, and untracked files. See `references/attribution.md` for the full evidence procedure.
+
+### 3. Run structured discovery
+
+Examples:
 
 ```bash
-# stage just the matching JSONL paths into a text file, then:
-go-minitrace convert pi --source-list /tmp/sessions.txt --output-dir ./analysis/pi
+go-minitrace discover pi \
+  --source-dir ~/.pi/agent/sessions \
+  --since "$SINCE" \
+  --cwd-contains "$CWD_FRAGMENT" \
+  --output json > ./pi-candidates.json
+
+go-minitrace discover codex \
+  --source-dir ~/.codex \
+  --since "$SINCE" \
+  --cwd-contains "$CWD_FRAGMENT" \
+  --output json > ./codex-candidates.json
 ```
 
-`--source-session` (repeatable) also works for one-off files. If you must use `--source-session` repeatedly into the same output dir, treat the manifests as advisory and query the `.minitrace.json` file glob directly.
+Preserve the discovery output. Do not stop after the first plausible match.
 
-### 4. Query the archive
+### 4. Use exact content fallback when necessary
 
-`go-minitrace query run` builds (or reuses from cache) a normalized SQLite database for the given archives and runs either a named preset or ad hoc SQL through a sandboxed read-only query runner. There is no separate import step.
+Use raw grep only to create a source list:
 
-Start with a built-in preset for one-off work:
+```bash
+rg -l -F 'pkg/example/distinctive_file.go' \
+  ~/.pi/agent/sessions ~/.codex/sessions \
+  > ./content-candidates.txt
+```
+
+Use two or more independent signatures when possible. Inspect candidate metadata and deduplicate paths before conversion. Broad terms such as a language name or repository topic produce review and quotation false positives.
+
+### 5. Convert the narrow source set
+
+Pi:
+
+```bash
+go-minitrace convert pi \
+  --source-list ./pi-sessions.txt \
+  --output-dir ./analysis/pi
+```
+
+Codex:
+
+```bash
+scripts/audit_codex_sources.sh ./codex-sessions.txt
+
+go-minitrace convert codex \
+  --source-list ./codex-sessions.txt \
+  --output-dir ./analysis/codex
+```
+
+If the Codex audit reports an effective-identity collision, convert separately:
+
+```bash
+n=0
+while IFS= read -r source; do
+  [[ -z "$source" || "$source" == \#* ]] && continue
+  n=$((n + 1))
+  go-minitrace convert codex \
+    --source-session "$source" \
+    --output-dir "./analysis/codex-source-$n"
+done < ./codex-sessions.txt
+```
+
+Then query repeatable archive globs or a glob that includes each output root.
+
+### 6. Profile the converted archives
+
+Start with built-ins:
 
 ```bash
 go-minitrace query run \
   --archive-glob './analysis/*/active/*/*.minitrace.json' \
   --preset session-list
+
+go-minitrace query run \
+  --archive-glob './analysis/*/active/*/*.minitrace.json' \
+  --preset tool-failures
 ```
 
-Available presets include `session-list`, `framework-summary`, `annotations`, `timing-analysis`, `tool-operation-breakdown`, `tool-failures`, `read-ratio-distribution`, `file-operations`, and `file-timeline` (see `go-minitrace help query-commands`).
-
-Then switch to custom SQL for repo-specific questions. Save every SQL file you write inside the working folder (for example under `scripts/`) before running it, so the full analysis path is reproducible:
+Save custom SQL before executing it:
 
 ```bash
 go-minitrace query run \
   --archive-glob './analysis/*/active/*/*.minitrace.json' \
-  --sql-file ./queries/tool-frequency.sql \
-  --max-rows 5000
+  --sql-file ./queries/relevant-tool-calls.sql \
+  --output json \
+  --max-rows 5000 \
+  > ./results/relevant-tool-calls.json
 ```
 
-Useful flags: `--sql`, `--sql-file`, `--preset`, `--archive-glob` (repeatable), `--max-rows`, `--max-cell-chars`, `--timeout-ms`.
+Query the archive files directly. Treat manifests as advisory until counts and source identities are audited.
 
-The normalized schema has real tables: `sessions`, `turns`, `tool_calls`, `annotations`, `metrics`, `files`, `events`, `attachments`, `handovers`, plus a `sessions_base` compatibility view for legacy SQL. Prefer the real columns over JSON-blob access — e.g. `sessions.turn_count` instead of `metrics->>'turn_count'`, and join `tool_calls` instead of `UNNEST(tool_calls)`. See `references/queries.md` for ready-made queries and `go-minitrace help minitrace-schema` for every field. Schema introspection via `sqlite_master` is blocked by the sandbox; use `db.tables()`/`db.schema()` from JS or the schema help page.
+### 7. Verify evidence externally
 
-### 4b. Write and run JS command handlers
+SQL identifies candidate turns and tool calls. It does not prove authorship by itself.
 
-SQL is sufficient for most analysis tasks, but JavaScript command handlers let you go further: scoring, multi-query joins in JS, async logic, relative helper modules, and richer row shapes. Use JS when the analysis logic is complex enough that SQL becomes unwieldy or when you need to reuse shared helper code.
+For implementation attribution:
 
-Start by reading the two embedded help pages:
+1. inspect exact tool-call arguments and results;
+2. reopen nearby transcript turns;
+3. verify resulting hashes with repository Git history;
+4. verify file content and working-tree state;
+5. classify alternatives by observable activity;
+6. state unresolved ambiguity.
 
-```bash
-go-minitrace help js-api-reference
-go-minitrace help structured-query-commands
-```
+Never report a text match for `git commit` as a successful commit object. Separate mention rows, command attempts, nested exit status, and repository-verified hashes.
 
-The **JS API Reference** covers every export of `require("minitrace")`. The current API is **builder-composed**: you build a Go-backed `DBHandle` from sources/cache/limits, then call `db.query(...)`. The key factories are `mt.db()`, `mt.session()`, `mt.sources()`, `mt.cache()`, `mt.limits()`, `mt.importer()`, `mt.query()` (named recipes), and `mt.view()` (generic views). The **structured query commands** page covers the `__verb__`, `__section__`, and `__package__` scanner markers, the file-to-CLI path convention, and how to load external repositories.
+### 8. Report with explicit roles and caveats
 
-A minimal JS command that wraps a single SQL query looks like this:
+A strong report includes:
 
-```js
-__section__("filters", {
-  fields: {
-    framework: { type: "stringList", help: "Filter by framework" },
-    limit:     { type: "int",        default: 25, help: "Row limit" },
-  },
-});
+- question and time window;
+- candidate-selection method;
+- framework, session ID, native source path, cwd, and relevant time range;
+- decisive user turns and tool calls;
+- repository hashes, paths, commands, and external verification;
+- implementer/reviewer/investigator/reference-only classification where relevant;
+- alternatives rejected and why;
+- adapter, manifest, collision, or missing-data caveats;
+- saved query and result paths;
+- confidence tied to evidence strength.
 
-function sessionList(filters) {
-  const mt = require("minitrace");
-  const db = mt.db()
-    .RuntimeArchives()
-    .QueryCommandDefaults()
-    .Build();
-  try {
-    return db.query(`
-      SELECT session_id, title, agent_framework AS framework
-      FROM sessions
-      WHERE 1=1
-      ${filters.framework?.length
-        ? `AND agent_framework IN (${mt.sql.stringIn(filters.framework)})`
-        : ""}
-      ORDER BY started_at DESC
-      LIMIT ${filters.limit ?? 25}
-    `);
-  } finally {
-    db.close();
-  }
-}
+## Evidence hierarchy for attribution
 
-__verb__("sessionList", {
-  name:  "session-list",
-  short: "List minitrace sessions",
-  fields: { filters: { bind: "filters" } },
-});
-```
+Strong evidence:
 
-If that lives in `my-commands/overview/session-tools.js`, the CLI path becomes:
+- patch/write operation targeting the exact repository file;
+- repository-verified commit hash correlated with transcript command and time;
+- test execution against the changed package;
+- creation of a current untracked file with matching transcript content.
 
-```bash
-go-minitrace query commands overview session-tools session-list \
-  --query-repository ./my-commands \
-  --archive-glob './analysis/*/active/*/*.minitrace.json' \
-  --framework codex
-```
+Supporting evidence:
 
-For repeated project work, avoid passing `--query-repository` manually by configuring discovery once. Current `go-minitrace` supports all of these repository sources, with CLI/env taking precedence over config and the embedded catalog last:
+- command executed with the repository as workdir;
+- user instruction requesting the exact implementation;
+- file reads and Git status around the relevant operation.
 
-```bash
-# Linux/macOS use ':' as the path-list separator; Windows uses ';'.
-export GO_MINITRACE_QUERY_REPOSITORIES="$PWD/query-commands:$HOME/shared-minitrace-queries"
-```
+Weak evidence:
 
-```yaml
-# ~/.config/go-minitrace/config.yaml, ~/.go-minitrace/config.yaml,
-# /etc/go-minitrace/config.yaml, <git-root>/.go-minitrace.yml,
-# <git-root>/.go-minitrace.override.yml, <cwd>/.go-minitrace.yml,
-# or <cwd>/.go-minitrace.override.yml
-queryRepositories:
-  - ./query-commands
-```
+- cwd alone;
+- filename or title alone;
+- keyword frequency;
+- quoted transcript content;
+- review text that describes another session's work.
 
-Local `.go-minitrace.yml` / `.go-minitrace.override.yml` files are discovered from the git root and the current working directory. Relative `queryRepositories` entries in config files resolve relative to the config file directory, so `./query-commands` in a git-root `.go-minitrace.yml` points at that repository's query command folder regardless of the subdirectory where the command is run. If a higher-layer config file contains `queryRepositories`, it replaces lower-layer config-derived repositories; explicit `--query-repository` and `GO_MINITRACE_QUERY_REPOSITORIES` are still prepended.
+Do not attribute implementation from weak evidence alone.
 
-**When to reach for JS instead of SQL:**
+## Diary requirements when requested
 
-- The analysis needs multiple SQL queries whose results are joined or post-processed in JS
-- You need JS-side scoring or classification logic (e.g. computing a `focus_score` from ratios)
-- You need async behavior (e.g. delaying, batching, or rate-limiting)
-- Several commands share helper utilities
-- The output shape is richer than a flat SQL result set (cards, summaries)
+A diary is an intervention, not neutral telemetry. If the user requests one:
 
-**The showcase repositories are the best starting point.** Copy one and adapt it:
-
-```bash
-go-minitrace query commands --query-repository ./testdata/query-repositories/js-showcase --help
-```
-
-The `js-showcase` directory demonstrates every pattern listed in its own README: multi-verb files, aliases targeting JS commands, relative helper modules, pure synthetic rows, async commands with `require("timer")`, multi-query joins in JS, JS-side scoring, and per-session tool co-occurrence analysis.
-
-Run them against real local sessions to see non-synthetic output:
-
-```bash
-# convert Pi sessions locally (nothing leaves the machine)
-go-minitrace convert pi --source-dir ~/.pi/agent/sessions --output-dir /tmp/pi-mini
-
-# smoke the JS showcases against the local archive
-go-minitrace query commands \
-  --query-repository ./testdata/query-repositories/js-showcase \
-  analysis workspace-lab workspace-scoreboard \
-  --archive-glob '/tmp/pi-mini/active/*/*.minitrace.json' \
-  --output json
-```
-
-Validate the commands before trusting their output — malformed JS or SQL errors surface as runtime exceptions. Run through the CLI first, then test with `--output json` to confirm the row shape matches your expectation.
-
-For a worked example of JS + SQL side-by-side in the same repository, see `testdata/query-repositories/mixed-sql-js-showcase/`.
-
-## What to extract in summaries
-
-- Session counts by framework and model
-- Turn counts and tool-call counts
-- Dominant tool families via the `tool_calls` table (join on `session_id`)
-- Timing and latency patterns via the `sessions` columns and the `metrics` table
-- Outlier sessions worth manual reading
-- Data-quality caveats, especially manifest drift or missing repo filters
+- append each checkpoint before starting the next phase;
+- record wall-clock timestamp, goal, evidence, exact command/query, decision, failure, changed assumption, confidence, and next action;
+- do not reconstruct all checkpoints at the end;
+- preserve diary writes so an evaluator can compare checkpoint time with transcript events.
 
 ## Scripts
 
-- `scripts/discover_codex_by_cwd.sh`: find Codex sessions for one cwd by reading `session_meta.payload.cwd`
-- `scripts/discover_pi_by_cwd.sh`: find Pi sessions for one cwd from the slugged directory
-- `scripts/stage_codex_by_cwd.sh`: copy matching Codex JSONL files into a temporary `.codex` tree
-- `scripts/query_minitrace.sh`: run ad hoc SQL against a minitrace archive glob (uses `go-minitrace query run`)
-- `scripts/audit_manifests.sh`: compare manifest counts with actual `.minitrace.json` file counts
+- `scripts/audit_codex_sources.sh`: inspect native Codex IDs, parent-thread IDs, and effective normalized-identity collision risk before conversion.
+- `scripts/audit_manifests.sh`: compare generated archive counts with manifest counts.
+- `scripts/query_minitrace.sh`: run saved SQL against archive globs.
+- `scripts/discover_pi_by_cwd.sh`: legacy/local fallback; prefer `go-minitrace discover pi`.
+- `scripts/discover_codex_by_cwd.sh`: legacy/local fallback; prefer `go-minitrace discover codex`.
+- `scripts/stage_codex_by_cwd.sh`: legacy fallback only; current Codex conversion supports `--source-list` and `--source-session`.
 
-## Embedded documentation quick reference
+## Completion checklist
 
-These embedded help pages cover the full surface area:
+Before finalizing an analysis:
 
-| Help page | What it covers |
-|-----------|----------------||
-| `go-minitrace help js-api-reference` | `require("minitrace")` builder factories, all built-in modules, scanner markers, field types |
-| `go-minitrace help structured-query-commands` | Authoring `.sql` and `.js` files, repository layout, aliases |
-| `go-minitrace help query-recipes` | Ready-to-use SQLite SQL for common analysis patterns |
-| `go-minitrace help writing-queries` | SQLite JSON operators and normalized-schema query patterns |
-| `go-minitrace help minitrace-schema` | Every field in a minitrace session document |
-| `go-minitrace help annotation-playbook` | Annotation CLI and web UI workflow |
-| `go-minitrace help query-duckdb` | **Migration guide only** — rewriting legacy DuckDB SQL for the normalized SQLite schema |
-
-## If a local go-minitrace checkout exists
-
-`go-minitrace help` and `go-minitrace help --ui` already expose a substantial set of embedded commands, queries, and tutorials. Check those first before inventing new SQL or shell workflows; many common analysis tasks already have examples or preset queries you can reuse.
-
-Useful implementation entry points:
-
-- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/cmd/go-minitrace/main.go`
-- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/cmd/go-minitrace/cmds/convert/codex.go`
-- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/cmd/go-minitrace/cmds/convert/pi.go`
-- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/minitrace/archive.go`
-- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/query/engine.go`
-
-Use those files when the user wants implementation-level analysis or when you need to explain why a query or manifest behaves a certain way.
+- [ ] Installed command help was checked.
+- [ ] Native sources were not modified.
+- [ ] Candidate source lists and custom SQL were saved.
+- [ ] Conversion counts and Codex parent/subagent collisions were audited.
+- [ ] Claims were verified against transcript context and external state.
+- [ ] Command mentions were not mislabeled as successful operations.
+- [ ] Implementer, reviewer, investigator, and reference-only sessions were distinguished where relevant.
+- [ ] Caveats and rejected alternatives were reported.
+- [ ] Diary checkpoints were contemporaneous if the diary arm was requested.
