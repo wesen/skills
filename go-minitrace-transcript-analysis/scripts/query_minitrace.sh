@@ -9,4 +9,4 @@ fi
 ARCHIVE_GLOB="$1"
 SQL="$2"
 
-go-minitrace query duckdb --archive-glob "${ARCHIVE_GLOB}" --sql "${SQL}"
+go-minitrace query run --archive-glob "${ARCHIVE_GLOB}" --sql "${SQL}"
