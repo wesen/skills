@@ -45,13 +45,21 @@ The remote service runs on the crib k3s cluster (Proxmox host at 192.168.0.225),
 
 ## Print Workflow
 
+Use the installed `almanach-render-service` command below. After rebuilding the source repository, refresh the installed CLI with:
+
+```bash
+install -m 0755 ~/code/wesen/go-go-golems/almanach/dist/almanach-render-service \
+  ~/.local/bin/almanach-render-service
+```
+
+If only a GoReleaser package is present, install its contained executable instead.
+
 ### 1. Preferred: print through the crib remote service
 
 Use the `print-remote` verb. It loads YAML/JSON or ZIP layout bundles locally, converts them to the JSON expected by the service, and POSTs to `https://almanach.crib.scapegoat.dev/api/render-and-print`. This avoids hand-written YAML-to-JSON HTTP pipelines and uses the remote service on the same LAN as the printer.
 
 ```bash
-cd ~/code/wesen/go-go-golems/almanach
-./dist/almanach-render-service print-remote \
+almanach-render-service print-remote \
   --layout path/to/layout.yaml \
   --output yaml
 ```
@@ -59,7 +67,7 @@ cd ~/code/wesen/go-go-golems/almanach
 Dry-run against the remote render endpoint without printing:
 
 ```bash
-./dist/almanach-render-service print-remote \
+almanach-render-service print-remote \
   --layout path/to/layout.yaml \
   --dry-run \
   --output yaml
@@ -68,7 +76,7 @@ Dry-run against the remote render endpoint without printing:
 Use ZIP bundles when local image assets should be inlined automatically:
 
 ```bash
-./dist/almanach-render-service print-remote \
+almanach-render-service print-remote \
   --layout layout-bundle.zip \
   --output yaml
 ```
@@ -78,8 +86,7 @@ Use ZIP bundles when local image assets should be inlined automatically:
 Use this only when the remote service is unavailable or when explicitly testing the direct ESP32 printer endpoint. Direct local printing renders with local Chrome and POSTs the bitmap to the printer IP.
 
 ```bash
-cd ~/code/wesen/go-go-golems/almanach
-./dist/almanach-render-service print \
+almanach-render-service print \
   --layout path/to/layout.yaml \
   --printer-ip 192.168.0.126 \
   --feed-lines 8 \
@@ -90,7 +97,7 @@ cd ~/code/wesen/go-go-golems/almanach
 ### 3. Render a preview (no print)
 
 ```bash
-./dist/almanach-render-service render \
+almanach-render-service render \
   --layout layout.yaml \
   --out /tmp/preview.png \
   --web-dir ~/code/wesen/go-go-golems/almanach/web/dist \
@@ -100,7 +107,7 @@ cd ~/code/wesen/go-go-golems/almanach
 ### 4. Inspect layout metrics
 
 ```bash
-./dist/almanach-render-service inspect \
+almanach-render-service inspect \
   --layout layout.yaml \
   --output yaml
 ```
@@ -111,26 +118,26 @@ Layout files can contain `{{variable}}` expressions that are resolved from a sep
 
 ```bash
 # From a template + data file
-./dist/almanach-render-service print-remote \
+almanach-render-service print-remote \
   --layout path/to/template.yaml \
   --data path/to/data.yaml \
   --output yaml
 
 # With inline variable override
-./dist/almanach-render-service render \
+almanach-render-service render \
   --layout template.yaml \
   --data data.yaml \
   --define "title=OVERRIDE TITLE" \
   --out /tmp/preview.png
 
 # Inline only (no data file). Multiple values are comma-separated in one flag.
-./dist/almanach-render-service render \
+almanach-render-service render \
   --layout template.yaml \
   --define "title=HELLO,date=May 26, 2026" \
   --out /tmp/preview.png
 ```
 
-Template expressions: `{{key}}` (required), `{{key:fallback}}` (with default), `{{$ENV_VAR}}` (from environment), `{{$ENV_VAR:fallback}}` (environment with fallback). Use `--define`, not `-D`; no short `-D` alias exists. Inline defines override values loaded from `--data`.
+Template expressions: `{{key}}` (required) and `{{key:fallback}}` (with default). Environment variables are **not** resolvable from layouts (`{{$NAME}}` was removed as a security hardening in ALMANACH-WORKSLIP — a layout could exfiltrate process env vars into prints); pass every value via `--data`/`--define`. Use `--define`, not `-D`; no short `-D` alias exists. Inline defines override values loaded from `--data`.
 
 When no `--data` or `--define` is provided, template resolution is skipped entirely, so literal `{{...}}` strings remain unchanged. Almanach no longer fetches or invents content: YAML/layout files and explicit data contexts are the only content sources. If no layout is supplied, the app renders only the minimal scaffold (title + date).
 
@@ -151,18 +158,18 @@ The printer uses ESP-IDF BLE provisioning with Security 1. Pair when the printer
 
 ```bash
 # Step 1: Verify BLE connection
-./dist/almanach-render-service ble-provision --implementation native \
+almanach-render-service ble-provision --implementation native \
   --action version --service-name ALM_0F2320 --pop alm-0f2320
 
 # Step 2: Provision WiFi
-./dist/almanach-render-service ble-provision --implementation native \
+almanach-render-service ble-provision --implementation native \
   --action provision --service-name ALM_0F2320 --pop alm-0f2320 \
   --ssid yolobolo --passphrase <PASSWORD>
 ```
 
 ### Pair via Web Bluetooth (browser)
 
-1. Start the setup server: `./dist/almanach-render-service setup --port 8199`
+1. Start the setup server: `almanach-render-service setup --port 8199`
 2. Open `http://localhost:8199/setup` in Chrome
 3. Enter PoP (`alm-0f2320`), WiFi SSID, password
 4. Click "Find BLE printer" → select `ALM_0F2320`
@@ -231,9 +238,72 @@ blocks:
       author: Author
 ```
 
-Valid block types: `title`, `date`, `divider`, `plan`, `news`, `weather`, `note`, `habits`, `mood`, `reading`, `reflection`, `quote`, `word`, `history`, `did`, `image`.
+Valid almanac block types: `title`, `date`, `divider`, `plan`, `news`, `weather`, `note`, `habits`, `mood`, `reading`, `reflection`, `quote`, `word`, `history`, `did`, `image`.
+
+Additionally the **work-slip layout primitives** (see the Work Slips section below): `text`, `banner`, `rule`, `space`, `row`, `kv`, `list`, `checks`, `writein`, `qr`, `bars`, `table`.
 
 Each block type has specific data fields — check the DSL reference for the complete list.
+
+## Work Slips (layout primitives + work themes)
+
+For work/logistics printouts — Upwork job slips, triage cards, decision
+sheets, focus cards, digests — use the generic layout primitives instead of
+almanac content blocks (ALMANACH-WORKSLIP). Conventions that differ from
+almanac pages:
+
+- **Themes:** `swiss` (Archivo grotesque, hairline rules), `brutalist`
+  (everything uppercase and weight 800+, slab rules), `terminal` (all mono,
+  dashed rules, outlined banners). All three print **edge to edge by
+  default** (0px page padding — the paper strip has physical margin) with a
+  tight 2px block gap; explicit `space` blocks own the vertical rhythm.
+- **`bodyScale: 1` always.** The slip presets (`display`, `h1`, `h2`,
+  `micro`, and the work themes' body/caption overrides) are print-ready
+  absolute sizes; the almanac 1.3–1.42 convention does NOT apply.
+- **Pre-expanded content only.** There is no binding language (no `repeat`,
+  `if`, filters). The producer (scraper/agent/script) emits the final block
+  list: resolve things like `#<last4-of-id>` and joined tag lines yourself.
+  `{{key}}` + `--data`/`--define` remain available for simple value injection.
+- **Type roles** go in block *data* as `preset: h1|h2|display|micro|body|...`;
+  per-block `style` stays a TextStyle object (e.g. `style: { textCase: upper }`).
+- Budget ~2–3 words per h1/h2 line at 384 dots; `lines: N` clamps with an
+  ellipsis. Keep `qr` `size` around 90–140 so modules stay scannable.
+- Put the QR payload in `data.value` (for example,
+  `{ value: "https://example.com", size: 120 }`). `data.text` is accepted only
+  as a compatibility alias; generators should emit the canonical `value` field.
+- `row` is the only container: `cols: [{ w: 90|"1fr", text..., preset... }]`
+  or `{ w, blocks: [...] }` for nested stacks. Per-block `render`/heat
+  overrides apply to top-level blocks only.
+
+Ready-to-copy examples (also the producer templates for the Upwork feed):
+`examples/layouts/10-job-slip.yaml`, `11-decision-sheet.yaml` (brutalist),
+`12-triage-card.yaml` (checks + write-in + QR), `13-focus-card.yaml`
+(terminal), `14-morning-digest.yaml` (a pre-expanded repeat).
+
+Minimal slip:
+
+```yaml
+almanach_studio_version: 1
+theme: brutalist
+paperWidth: 384
+bodyScale: 1
+feedLines: 8
+blocks:
+  - id: head
+    type: banner
+    data: { text: "NEW JOB", right: "14:32", pad: "m" }
+  - id: title
+    type: text
+    data: { text: "ESP32 Firmware Engineer", preset: h1, lines: 3 }
+  - id: split
+    type: row
+    data:
+      cols:
+        - { w: "1fr", text: "$50 – $110/hr", preset: h2 }
+        - { w: "1fr", text: "EXPERT", preset: h2, align: right }
+  - id: actions
+    type: checks
+    data: { items: ["star", "skip"], inline: true }
+```
 
 ### `image` block
 
@@ -307,7 +377,8 @@ DATA_URL=$(python3 -c "import base64,sys; print('data:image/png;base64,' + base6
 | Item | Path |
 |------|------|
 | Repo | `~/code/wesen/go-go-golems/almanach` |
-| Binary | `~/code/wesen/go-go-golems/almanach/dist/almanach-render-service` |
+| Installed CLI | `~/.local/bin/almanach-render-service` |
+| Source build output | `~/code/wesen/go-go-golems/almanach/dist/almanach-render-service` after `make build` |
 | State file | `~/.config/almanach/render-service/state.json` |
 | crib-k3s manifests | `~/code/wesen/crib-k3s/gitops/kustomize/almanach/` |
 | Docker image | `ghcr.io/go-go-golems/almanach:sha-<commit>` (GitOps-managed immutable tag) |
