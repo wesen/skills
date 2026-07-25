@@ -230,11 +230,62 @@ Review sessions often receive the full history they are assessing. Signals inclu
 
 Keyword frequency is especially unreliable in this case. Compare emitted tool activity, not just serialized session text.
 
-## 11. Rule out the current investigation
+## 11. Verify a read actually happened (mention is not a read)
+
+A keyword match on command text is not evidence that a file was read. A
+command that *searches for* a file (`find -name AGENTS.md`, `rg --files -g
+AGENTS.md`, or a shell `for`-loop guarded by `if test -f "$f"`) mentions the
+path in its arguments but may never open the file. Counting such commands as
+reads inflates the read set and can produce a false attribution — for example,
+claiming an agent "read the repo's `AGENTS.md`" when the file did not even
+exist and the command was a failed existence check.
+
+The skill's general rule "a mention is not a touch" applies to writes; the
+same discipline applies to reads, with a different verification step. To prove
+a read occurred, inspect the tool-call `result`, not just the command:
+
+- For a `sed`/`cat`/`head` read, the `result` contains the file's contents
+  (or a `FILE <path>` marker if the command was a `for f in ...; do if test -f
+  "$f"; then echo "FILE $f"; sed ...; fi; done` loop).
+- For a `find`/`rg --files`/`ls`, the `result` is a listing, not file contents.
+  These are searches, not reads.
+- An empty `result`, a `no such file` message, or the absence of a `FILE`
+  marker means the file was not opened, even if the path appears in the command.
+
+A verification query classifies each candidate by its result shape:
+
+```sql
+WITH c AS (
+  SELECT emitting_turn_index AS t, tool_call_id, tool_name,
+         coalesce(nullif(command,''),
+                  json_extract(arguments_json,'$.command'),
+                  json_extract(arguments_json,'$.input'),
+                  arguments_json) AS ct,
+         coalesce(result,'') AS result
+  FROM tool_calls
+  WHERE lower(coalesce(arguments_json,'')) LIKE '%agents.md%'
+)
+SELECT t, tool_name,
+  CASE
+    WHEN lower(result) LIKE '%file %agents.md%'      THEN 'READ (FILE marker present)'
+    WHEN lower(result) LIKE '%no such file%'          THEN 'NOT FOUND (no such file)'
+    ELSE 'SEARCH/LIST only (no FILE marker)'
+  END AS outcome,
+  substr(result,1,80) AS result_head
+FROM c ORDER BY t;
+```
+
+Apply this before reporting that a session consumed a document. A session that
+searched for `AGENTS.md` eight times and found none did not read it; a session
+whose `result` contains the file's frontmatter did. The distinction matters
+because substrate documentation gaps are often diagnosed by whether an agent
+*read* a file, and a search-only match will misattribute consumption.
+
+## 12. Rule out the current investigation
 
 The current investigator can become a top content match because its prompt and report contain every target signature. Record its session ID and start time. A session created after the repository work, whose operations inspect rather than modify the repository, must be classified as investigation evidence.
 
-## 12. Confidence rubric
+## 13. Confidence rubric
 
 ### Very high
 
@@ -258,7 +309,7 @@ The current investigator can become a top content match because its prompt and r
 
 - attribution depends mainly on cwd, mention counts, filenames, or quoted content.
 
-## 13. Report template
+## 14. Report template
 
 ```markdown
 # Session attribution report

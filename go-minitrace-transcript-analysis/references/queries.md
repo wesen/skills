@@ -322,6 +322,132 @@ A review session can have high topic counts and almost no emitted tool calls.
 A long-lived implementer can have a misleading original cwd. Confirm roles with
 exact operations and external repository state.
 
+## Symbol-relevance score (narrowing only)
+
+A scored ranking reduces many sessions to a shortlist of ~15 worth inspecting.
+It is a sorting device, not an attribution. Two sessions can have identical
+scores and opposite roles: one wrote the code, the other read it to write a
+report. Always follow with the distinct-files-written query below.
+
+The score counts tool calls whose `command` or `file_path` touches a set of
+distinctive symbols, plus write/exec totals for context:
+
+```sql
+WITH calls AS (
+  SELECT session_id, emitting_turn_index AS turn_index, tool_name,
+         operation_type, file_path,
+         coalesce(nullif(command, ''),
+                  json_extract(arguments_json, '$.command'),
+                  json_extract(arguments_json, '$.input'),
+                  arguments_json) AS command_text
+  FROM tool_calls
+),
+scored AS (
+  SELECT session_id,
+    SUM(CASE WHEN lower(coalesce(command_text,'')) LIKE '%symbol_a%'
+              OR lower(coalesce(command_text,'')) LIKE '%symbol_b%'
+              OR lower(coalesce(file_path,''))     LIKE '%symbol_a%'
+              OR lower(coalesce(file_path,''))     LIKE '%symbol_b%'
+              THEN 1 ELSE 0 END) AS symbol_hits,
+    SUM(CASE WHEN operation_type IN ('NEW','MODIFY') THEN 1 ELSE 0 END) AS writes,
+    SUM(CASE WHEN operation_type = 'EXECUTE' THEN 1 ELSE 0 END) AS executes
+  FROM calls GROUP BY session_id
+)
+SELECT s.session_id, s.agent_framework AS framework, substr(s.title,1,50) AS title,
+       s.working_directory AS cwd, s.turn_count, s.tool_call_count,
+       COALESCE(sc.symbol_hits,0) AS symbol_hits,
+       COALESCE(sc.writes,0) AS writes, COALESCE(sc.executes,0) AS executes
+FROM sessions s LEFT JOIN scored sc USING (session_id)
+ORDER BY COALESCE(sc.symbol_hits,0) DESC, COALESCE(sc.writes,0) DESC, s.started_at DESC;
+```
+
+Choose symbols that are unlikely to occur in review prose: exact package paths,
+function names, or commit-subject fragments — not broad topic words. A high
+score means the session was exposed to the topic, not that it changed the code.
+
+## Distinct files written per session (decisive for implementer attribution)
+
+This query does work that symbol frequency cannot: it names the exact files
+each session changed, filtered to write operations and grouped by session. It
+is the decisive step that turns a relevance-score shortlist into an
+attributed set.
+
+```sql
+SELECT DISTINCT session_id, file_path
+FROM tool_calls
+WHERE operation_type IN ('NEW','MODIFY')
+  AND ( lower(coalesce(file_path,'')) LIKE '%pkg/target_package/%'
+     OR lower(coalesce(file_path,'')) LIKE '%pkg/other_package/target_file.go%' )
+ORDER BY session_id, file_path;
+```
+
+Two properties make it decisive. First, `operation_type IN ('NEW','MODIFY')`
+excludes reads and searches, so a session that only read the file does not
+appear. Second, `DISTINCT` collapses repeated edits to one row, so a session
+that edited the same file fifteen times counts once. The result is a small,
+readable table of "session → files it actually changed." Cross-reference
+each session's files against repository commits to finish the attribution
+(see `references/attribution.md`).
+
+## Verify a file was actually read (not just searched for)
+
+A keyword match on command text is not evidence that a file was read. A command
+that *searches for* a file (`find -name X`, `rg --files -g X`, or a `for`-loop
+with `if test -f`) mentions the path but may never open it. To prove a read
+occurred, inspect the `result`, not just the command. This is the read-side
+analogue of "a mention is not a touch" for writes; see
+`references/attribution.md` §11.
+
+```sql
+WITH c AS (
+  SELECT emitting_turn_index AS t, tool_call_id, tool_name,
+         coalesce(nullif(command,''),
+                  json_extract(arguments_json,'$.command'),
+                  json_extract(arguments_json,'$.input'),
+                  arguments_json) AS ct,
+         coalesce(result,'') AS result
+  FROM tool_calls
+  WHERE lower(coalesce(arguments_json,'')) LIKE '%<filename>%'
+)
+SELECT t, tool_name,
+  CASE
+    WHEN lower(result) LIKE '%file %<filename>%'   THEN 'READ (FILE marker present)'
+    WHEN lower(result) LIKE '%no such file%'       THEN 'NOT FOUND (no such file)'
+    ELSE 'SEARCH/LIST only (no FILE marker)'
+  END AS outcome,
+  substr(result,1,80) AS result_head
+FROM c ORDER BY t;
+```
+
+A `READ` outcome (a `FILE <path>` marker or the file's contents in `result`)
+is the only row that counts as consumption. A `SEARCH/LIST only` row is a
+lookup, not a read. This distinction matters when diagnosing whether an agent
+consumed a substrate document — a search-only match will misattribute
+consumption and can hide a documentation gap.
+
+## `file-history` verb limitation for Codex patches
+
+The `history file-history --path <fragment>` verb matches the `file_path`
+column. For Codex `apply_patch` operations the target path often lives only in
+`arguments_json` (inside the `*** Update/Add/Delete File: <path>` header), not
+in `file_path`, so the verb may return an empty timeline for a file that was
+definitely patched. When the verb returns nothing for a Codex-patched file,
+fall back to a direct query against `arguments_json`:
+
+```sql
+SELECT emitting_turn_index AS t, tool_name, file_path,
+       substr(arguments_json,1,200) AS args
+FROM tool_calls
+WHERE tool_name = 'apply_patch'
+  AND lower(arguments_json) LIKE '%<path-fragment>%'
+ORDER BY t;
+```
+
+The `file-history` verb remains the first choice (it extracts paths from
+multiple structural locations and home-normalizes them); use this fallback
+only when it returns an empty result for a file you have independent evidence
+was patched.
+
 ## Evaluate diary timing
 
 When a worker was required to maintain a diary, identify diary writes in the

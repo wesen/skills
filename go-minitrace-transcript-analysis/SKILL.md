@@ -23,9 +23,9 @@ The legacy DuckDB backend (`go-minitrace query duckdb`) is removed. Use `go-mini
 
 ## Load references selectively
 
-- Read `references/queries.md` before custom SQL. It documents the normalized schema, adapter caveats, and verified query patterns.
-- Read `references/attribution.md` when determining which session implemented repository work, authored commits, or created files.
-- Read `references/js-query-authoring.md` only when the analysis should become a reusable JavaScript query command. Most investigations need saved SQL, not a JS command repository.
+- Read `references/queries.md` before custom SQL. It documents the normalized schema, adapter caveats, and verified query patterns (including the symbol-relevance score and the distinct-files-written decisive query).
+- Read `references/attribution.md` when determining which session implemented repository work, authored commits, or created files in a given repository.
+- Read `references/adoption-attribution.md` when the question is which session adopted a mechanism into a *different* codebase (e.g. "who wired profile loading into their own app"). It documents the inverted search: start from the filesystem import graph, then match against transcript writes.
 
 ## Built-in query commands
 
@@ -101,6 +101,10 @@ Cwd is a shortlist signal, not a content index. Relevant work may be hidden when
 
 When cwd discovery misses relevant work, use exact content signatures to shortlist raw JSONL files, then convert the shortlist. Prefer exact paths, commit hashes, ticket IDs, symbols, and unusual phrases over broad topic words.
 
+**Symbol frequency narrows; it does not attribute.** A relevance score that ranks sessions by symbol-hit count is a shortlisting device, not a conclusion. The decisive step is a query that filters on `operation_type IN ('NEW','MODIFY')` and groups distinct target files per session — it names what each session actually changed, not what it was exposed to. See `references/queries.md` ("Symbol-relevance score" and "Distinct files written per session").
+
+**Adoption is a different question from implementation.** "Who adopted this into their own codebase" cannot be answered by grepping transcripts for symbols, because the symbol appears in review and investigation sessions too. Invert the search: start from the filesystem import graph (which files import the mechanism), then match those file paths against transcript writes. See `references/adoption-attribution.md`.
+
 ### Conversion
 
 Both Pi and Codex conversion currently support:
@@ -142,6 +146,11 @@ For some Codex transcripts:
 - `success = 1` may mean only that the outer tool transport succeeded.
 
 Inspect `arguments_json`, `result`, and the native transcript before concluding that an operation did not occur or succeeded. Verify commits and files against the repository itself.
+
+Two read-side consequences of the above:
+
+- **A mention is not a read.** A command that *searches for* a file (`find -name X`, `rg --files -g X`, a `for`-loop with `if test -f`) mentions the path in its arguments but may never open it. Prove a read occurred by inspecting `result` for the file's contents or a `FILE <path>` marker, not by matching the command text. See `references/queries.md` ("Verify a file was actually read") and `references/attribution.md` §11.
+- **`history file-history` may return empty for Codex patches.** The verb matches the `file_path` column, but Codex `apply_patch` target paths often live only in `arguments_json`. When the verb returns nothing for a file you have independent evidence was patched, fall back to a direct `arguments_json` query (see `references/queries.md`).
 
 ### Query engine
 
