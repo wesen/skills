@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# pandoc-math — pandoc wrapper that enables LaTeX math delimiters and
+# disables YAML metadata block parsing (so --- separators in transcripts
+# are not mistaken for frontmatter).
+#
+# Used by chatgpt-archive-day.sh and remarquee uploads to render ChatGPT
+# transcripts that contain \( \) \[ \] math notation.
+
+# Resolve the script directory (handles symlinks)
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+
+exec /usr/bin/pandoc \
+  -f markdown-yaml_metadata_block+tex_math_dollars+tex_math_single_backslash \
+  -H "${SCRIPT_DIR}/chatgpt-math-header.tex" \
+  "$@"
