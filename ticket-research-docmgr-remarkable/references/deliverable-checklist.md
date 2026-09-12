@@ -11,11 +11,15 @@ Use this checklist before final handoff.
 
 ## Analysis quality
 
+- a new reader can explain the main concept and overall architecture from the introduction alone, without relying on later implementation details
+- essential terminology is introduced before explanations depend on it; examples and diagrams clarify the concept rather than assume it
 - architecture mapping is evidence-backed
 - key claims reference files
 - proposed solution includes APIs and pseudocode
 - implementation plan is phased and actionable
 - testing strategy is explicit
+
+Reader orientation is a manual content check, not something proved by a heading, a glossary, or `docmgr doctor`. Keep it proportional to the document; do not require a fixed introductory template or an exhaustive overview.
 
 ## Bookkeeping
 

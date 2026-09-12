@@ -21,6 +21,16 @@ This skill guides the creation of high-quality technical textbooks in Peter Norv
 
 **Foundational first.** Start with the conceptual foundation. Help the reader understand why a design decision was made before showing them how it was implemented. A reader who understands why can extend the pattern; a reader who only knows how copies it.
 
+Make this concrete before drafting the opening:
+
+1. List the unfamiliar concepts its explanations depend on, and introduce them in dependency order.
+2. Define each essential term before using it in a design claim. Do not compress several unexplained terms into one sentence and defer their meaning to a later glossary.
+3. Follow one small representative example through input, relevant intermediate/result data and observable output. Label sketches or proposed formats honestly rather than presenting them as current implementation.
+4. Use diagrams to explain relationships or sequences, with labels already introduced in the prose. Address the likely misunderstanding explicitly.
+5. Read the introduction independently of the detailed chapters: can a new reader explain the main concept and overall architecture? Fix unexplained terms or missing connections before expanding reference material.
+
+Keep this orientation concise and proportional to the topic. It does not require a fixed template, an exhaustive glossary, or moving every implementation detail to the front.
+
 **Prose paragraphs that develop ideas.** Write in complete paragraphs that develop a thought fully. Each paragraph should advance the argument or explanation. Avoid short, declarative sentences that feel like bullet points in disguise.
 
 **Concrete over abstract.** Whenever possible, show real code, real output, real trace lines. Abstract descriptions of patterns are useful, but they land better when grounded in something the reader can see and run.

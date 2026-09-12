@@ -21,7 +21,11 @@ Use [evidence levels](references/evidence-levels.md): routine success needs comm
 
 ## Working loop
 
-Implement a coherent change, format and validate its affected behavior, then commit at an appropriate boundary. Update the diary, tasks and changelog for that milestone. Code and documentation may share a focused commit when that is clearer; two separate commits per small edit are not mandatory. Record the code hash in the subsequent checkpoint when available.
+Implement toward a major feature or integration milestone, then validate its affected behavior at that boundary. Commit boundaries and validation boundaries are not the same: smaller focused commits are useful checkpoints and do not warrant extensive checks, full builds or broad test suites merely because a commit is being made. Prioritize visible feature progress over repeated validation and bookkeeping loops.
+
+At a major boundary, run the relevant validation gate. If it fails, collect the diagnostics, fix the issues together where practical, and rerun the narrow checks needed to verify those fixes rather than restarting the entire validation pipeline after each edit. Run an earlier targeted check only when it resolves a concrete uncertainty or material risk; honor explicit project-required checks. Record which checks passed, failed or were deferred, and never describe an unvalidated checkpoint as qualified.
+
+Update the detailed diary, tasks and changelog at meaningful milestones, preserving failure evidence as it occurs without requiring a full bookkeeping cycle for every small edit. Code and documentation may share a focused commit when that is clearer; two separate commits per small edit are not mandatory. Record the code hash in the subsequent checkpoint when available.
 
 Use `docmgr` for ticket creation, task updates and relations. If a verified local binary provides `milestone record`, it can consolidate task/history updates; it does not author the diary or judge evidence. Follow the docmgr skill's actual API and capability check, not a proposed command from a design sketch.
 
