@@ -1,0 +1,26 @@
+{
+  "title": "Example Session",
+  "kicker": "CONTEXT AUDIT",
+  "subtitle": "example/repository · task/example",
+  "turns": [
+    {"number": "1", "title": "Implement the feature", "bullets": ["Read the contract", "Added tests"]}
+  ],
+  "timeline": [
+    {"period": "first", "category": "analysis", "title": "Mapped ownership", "bullets": ["Read the lifecycle package"], "advice": []},
+    {"period": "then", "category": "issue/churn", "title": "Wrong workspace selected", "bullets": ["The initial test used unrelated dependencies"], "advice": ["Record workspace mode before baseline tests"]}
+  ],
+  "knowledge": [
+    {"label": "INVARIANT", "text": "One process Wait owner"}
+  ],
+  "file_groups": [
+    {"title": "Runtime", "items": [{"name": "pkg/runtime/client.go", "purpose": "Owns plugin requests"}]}
+  ],
+  "change_groups": [
+    {"title": "Added", "items": [{"name": "pkg/runtime/lifetime.go", "purpose": "Owns process cleanup"}]}
+  ],
+  "api_groups": [
+    {"title": "Read", "items": [{"name": "runtime.Factory.Start", "purpose": "Starts plugin processes"}]},
+    {"title": "Added", "items": [{"name": "runtime.processLifetime", "purpose": "Reaps one child exactly once"}]}
+  ],
+  "state": ["Working tree clean", "Next: integration tests"]
+}
