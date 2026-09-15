@@ -9,7 +9,8 @@ description: Upload Markdown and source files to a reMarkable device as PDFs usi
 
 This specialist skill owns upload mechanics, authentication and success evidence. Research orchestrators delegate here rather than duplicating commands. Explicit user or higher-priority requirements override these defaults.
 
-- A normal successful upload needs no routine status/account preflight or post-upload listing. Retain its `OK: uploaded` result and destination; this proves cloud delivery, not physical device synchronization.
+- **Upload by default.** A normal delivery is one `remarquee upload` command; its `OK: uploaded` result and destination end the task. This proves cloud delivery, not physical device synchronization.
+- Do not add local pandoc test renders, screenshot comparisons, PDF inspection, or other diagnostics around a routine upload. Escalate to investigation — local isolation renders, visual or screenshot comparison, device listings — only when something is drastically wrong (the upload fails beyond the bounded retry below, or the user reports blank, garbled, or otherwise broken output) or when the user explicitly asks for verification.
 - Run dry-run or independent listing when explicitly required, when an ambiguous result needs investigation, or when inspecting existing state is necessary to prevent overwrite. Dry-run describes the command; it does not render a PDF.
 - Never use `--force` without authorization to replace the existing document and lose its annotations. Inspect or choose a new name when overwrite risk is unresolved.
 - Let built-in 401/403 reauthentication finish. If it fails, one explicit `--reauth` attempt is reasonable; persistent auth failure is a blocker, not an invitation to loop.
@@ -113,7 +114,8 @@ So you can use `--name "GOJA-053 FS Module Guide"` and the CLI will handle it.
 
 ## Common issues
 
-- **Pandoc "Unknown alias" errors**: Usually caused by malformed code block syntax. Test with `pandoc <file>.md -o /tmp/test.pdf --pdf-engine=xelatex` to isolate.
+- **Pandoc "Unknown alias" errors**: Usually caused by malformed code block syntax. Test with `pandoc <file>.md -o /tmp/test.pdf --pdf-engine=xelatex -V mainfont="DejaVu Sans" -V monofont="DejaVu Sans Mono"` to isolate. Always pass remarquee's font defaults in local test renders: a bare pandoc call renders with the Latin Modern default template, whose fonts lack Greek and many math glyphs and emit `Missing character` warnings the real pipeline never produces.
+- **"Missing character" warnings in a local test render**: almost always an artifact of the bare pandoc default template (Latin Modern). The remarquee pipeline renders with DejaVu Sans / DejaVu Sans Mono, which cover Greek and common math symbols. Treat missing glyphs as real only when they persist with the DejaVu variables passed, or when the user reports blanks in the delivered PDF.
 - **Nested code blocks in markdown**: Use explicit language tags like ` ```markdown ` and ` ```json `. Do NOT use sed to replace all ` ``` ` markers.
 - **401 Unauthorized during upload**: Wait for built-in retry first; if it fails, apply the bounded reauth policy above.
 - **400 Bad Request during upload**: Usually a filename issue — use `--name` with a simple name (alphanumeric + spaces + dashes only).
