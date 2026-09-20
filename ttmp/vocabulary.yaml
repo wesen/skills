@@ -9,6 +9,12 @@ topics:
       description: Documentation and instruction workflows
     - slug: tooling
       description: Developer and agent tooling
+    - slug: go-minitrace
+      description: go-minitrace transcript archives and queries
+    - slug: skills
+      description: agent skill packages
+    - slug: transcripts
+      description: coding-agent session transcripts
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes

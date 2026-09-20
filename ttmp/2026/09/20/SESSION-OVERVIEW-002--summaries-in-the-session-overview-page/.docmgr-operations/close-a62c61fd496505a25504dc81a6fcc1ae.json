@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "digest": "582278c560b8e1ca3641089a1022e7fe74e4502e405a9d71d5b39cbccf8c2dd6",
+  "request": {
+    "ticket": "SESSION-OVERVIEW-002",
+    "status": "complete",
+    "intent": "",
+    "entry": "All four phases complete: summary extraction (6aa8c20), latest-summary card (f7b9984), expanded browse view (d56af49), per-checkpoint file deltas plus docs (1205e2e)."
+  },
+  "receipt": {
+    "sequence": 1,
+    "operation_id": "close-a62c61fd496505a25504dc81a6fcc1ae",
+    "state": "committed",
+    "created_at": "2026-09-20T18:58:36.92798266Z",
+    "changed_paths": [
+      "changelog.md",
+      "index.md"
+    ],
+    "before": {
+      "changelog.md": "da34c3fad744337a8b74f3e39bf74260ed44430c40dd97f2655cac464024a5b9",
+      "index.md": "dd36764aa8683339f6ac2f3021fe012cd5e87a16c38ad0cc4fec2fca287422fd"
+    },
+    "after": {
+      "changelog.md": "a507eb867da5169646f9f830c6a42fb8d87608ba48b9bf0cce08907141aa3021",
+      "index.md": "cf781c26eb92db504f23cd6a24bc6744fd3d324e702332beef1411e0f76f5dd1"
+    }
+  },
+  "changes": [
+    {
+      "path": "changelog.md",
+      "before": "da34c3fad744337a8b74f3e39bf74260ed44430c40dd97f2655cac464024a5b9",
+      "after": "IyBDaGFuZ2Vsb2cKCiMjIDIwMjYtMDktMjAKCi0gSW5pdGlhbCB3b3Jrc3BhY2UgY3JlYXRlZAoKIyMgMjAyNi0wOS0yMAoKUDEgY29tcGxldGUgKDZhYThjMjApOiBzdW1tYXJ5IGJsb2NrcyBwYXJzZWQgaW50byBzZXNzaW9uIHJlY29yZHM7IDExNyBibG9ja3Mgb3ZlciA0IG9mIDE3IGFyY2hpdmVzLgoKIyMjIFJlbGF0ZWQgRmlsZXMKCi0gL2hvbWUvbWFudWVsLy5jb2RleC9za2lsbHMvc2Vzc2lvbi1vdmVydmlldy9zY3JpcHRzL3Nlc3Npb25fb3ZlcnZpZXcucHkg4oCUIGV4dHJhY3Rfc3VtbWFyaWVzIGFuZCBwYXJzZV9zdW1tYXJ5X2Jsb2NrIGFkZGVkCgojIyAyMDI2LTA5LTIwCgpQMiBjb21wbGV0ZSAoZjdiOTk4NCk6IGxhdGVzdCBzdW1tYXJ5IHJlbmRlcmVkIHBlciBjYXJkIHdpdGggZmllbGQgbGFiZWxzLCBtZXRhIGJhZGdlLCBoYXMtc3VtbWFyeSBmaWx0ZXIgYW5kIHN1bW1hcnktYXdhcmUgc2VhcmNoLgoKIyMjIFJlbGF0ZWQgRmlsZXMKCi0gL2hvbWUvbWFudWVsLy5jb2RleC9za2lsbHMvc2Vzc2lvbi1vdmVydmlldy9zY3JpcHRzL3Nlc3Npb25fb3ZlcnZpZXcucHkg4oCUIGxhdGVzdFN1bW1hcnkgYW5kIHN1bWJveCBzdHlsZXMKCiMjIDIwMjYtMDktMjAKClAzIGNvbXBsZXRlIChkNTZhZjQ5KTogZXhwYW5kZWQgbW9kYWwgYnJvd3NlciBmb3IgYWxsIHN1bW1hcnkgYmxvY2tzIHdpdGggbGlzdC9kZXRhaWwsIHByZXYtbmV4dCBhbmQga2V5Ym9hcmQgbmF2aWdhdGlvbi4KCiMjIyBSZWxhdGVkIEZpbGVzCgotIC9ob21lL21hbnVlbC8uY29kZXgvc2tpbGxzL3Nlc3Npb24tb3ZlcnZpZXcvc2NyaXB0cy9zZXNzaW9uX292ZXJ2aWV3LnB5IOKAlCBvcGVuT3ZlcmxheSBhbmQgb3ZlcmxheSBzdHlsZXMKCiMjIDIwMjYtMDktMjAKClA0IGluY3JlbWVudCAoMTIwNWUyZSk6IHBlci1jaGVja3BvaW50IGZpbGUgZGVsdGFzIGluIHRoZSBleHBhbmRlZCB2aWV3LCBwbHVzIFNLSUxMLm1kIGRvY3VtZW50YXRpb24gb2Ygc3VtbWFyeSBiZWhhdmlvdXIuCgojIyMgUmVsYXRlZCBGaWxlcwoKLSAvaG9tZS9tYW51ZWwvLmNvZGV4L3NraWxscy9zZXNzaW9uLW92ZXJ2aWV3L1NLSUxMLm1kIOKAlCBzdW1tYXJ5IGJsb2NrIGRvY3VtZW50YXRpb24KLSAvaG9tZS9tYW51ZWwvLmNvZGV4L3NraWxscy9zZXNzaW9uLW92ZXJ2aWV3L3NjcmlwdHMvc2Vzc2lvbl9vdmVydmlldy5weSDigJQgYXR0YWNoX3N1bW1hcnlfZmlsZXMgYW5kIHN1bW1hcnlGaWxlcwoKIyMgMjAyNi0wOS0yMAoKQWxsIGZvdXIgcGhhc2VzIGNvbXBsZXRlOiBzdW1tYXJ5IGV4dHJhY3Rpb24gKDZhYThjMjApLCBsYXRlc3Qtc3VtbWFyeSBjYXJkIChmN2I5OTg0KSwgZXhwYW5kZWQgYnJvd3NlIHZpZXcgKGQ1NmFmNDkpLCBwZXItY2hlY2twb2ludCBmaWxlIGRlbHRhcyBwbHVzIGRvY3MgKDEyMDVlMmUpLgo="
+    },
+    {
+      "path": "index.md",
+      "before": "dd36764aa8683339f6ac2f3021fe012cd5e87a16c38ad0cc4fec2fca287422fd",
+      "after": "LS0tClRpdGxlOiBTdW1tYXJpZXMgaW4gdGhlIHNlc3Npb24gb3ZlcnZpZXcgcGFnZQpUaWNrZXQ6IFNFU1NJT04tT1ZFUlZJRVctMDAyClN0YXR1czogY29tcGxldGUKVG9waWNzOgogICAgLSBza2lsbHMKICAgIC0gZ28tbWluaXRyYWNlCiAgICAtIHRyYW5zY3JpcHRzCkRvY1R5cGU6IGluZGV4CkludGVudDogbG9uZy10ZXJtCk93bmVyczogW10KUmVsYXRlZEZpbGVzOiBbXQpFeHRlcm5hbFNvdXJjZXM6IFtdClN1bW1hcnk6ICIiCkxhc3RVcGRhdGVkOiAyMDI2LTA5LTIwVDE0OjU4OjM2LjkyNzkxMjg1Ni0wNDowMApXaGF0Rm9yOiAiIgpXaGVuVG9Vc2U6ICIiCi0tLQoKIyBTdW1tYXJpZXMgaW4gdGhlIHNlc3Npb24gb3ZlcnZpZXcgcGFnZQoKIyMgT3ZlcnZpZXcKCjwhLS0gUHJvdmlkZSBhIGJyaWVmIG92ZXJ2aWV3IG9mIHRoZSB0aWNrZXQsIGl0cyBnb2FscywgYW5kIGN1cnJlbnQgc3RhdHVzIC0tPgoKIyMgS2V5IExpbmtzCgotICoqUmVsYXRlZCBGaWxlcyoqOiBTZWUgZnJvbnRtYXR0ZXIgUmVsYXRlZEZpbGVzIGZpZWxkCi0gKipFeHRlcm5hbCBTb3VyY2VzKio6IFNlZSBmcm9udG1hdHRlciBFeHRlcm5hbFNvdXJjZXMgZmllbGQKCiMjIFN0YXR1cwoKQ3VycmVudCBzdGF0dXM6ICoqYWN0aXZlKioKCiMjIFRvcGljcwoKLSBza2lsbHMKLSBnby1taW5pdHJhY2UKLSB0cmFuc2NyaXB0cwoKIyMgVGFza3MKClNlZSBbdGFza3MubWRdKC4vdGFza3MubWQpIGZvciB0aGUgY3VycmVudCB0YXNrIGxpc3QuCgojIyBDaGFuZ2Vsb2cKClNlZSBbY2hhbmdlbG9nLm1kXSguL2NoYW5nZWxvZy5tZCkgZm9yIHJlY2VudCBjaGFuZ2VzIGFuZCBkZWNpc2lvbnMuCgojIyBTdHJ1Y3R1cmUKCi0gZGVzaWduLyAtIEFyY2hpdGVjdHVyZSBhbmQgZGVzaWduIGRvY3VtZW50cwotIHJlZmVyZW5jZS8gLSBQcm9tcHQgcGFja3MsIEFQSSBjb250cmFjdHMsIGNvbnRleHQgc3VtbWFyaWVzCi0gcGxheWJvb2tzLyAtIENvbW1hbmQgc2VxdWVuY2VzIGFuZCB0ZXN0IHByb2NlZHVyZXMKLSBzY3JpcHRzLyAtIFRlbXBvcmFyeSBjb2RlIGFuZCB0b29saW5nCi0gdmFyaW91cy8gLSBXb3JraW5nIG5vdGVzIGFuZCByZXNlYXJjaAotIGFyY2hpdmUvIC0gRGVwcmVjYXRlZCBvciByZWZlcmVuY2Utb25seSBhcnRpZmFjdHMK"
+    }
+  ]
+}

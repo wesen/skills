@@ -1,0 +1,25 @@
+layout: ttmp/2026/09/20/SESSION-OVERVIEW-002--summaries-in-the-session-overview-page/various/slips/06-p3-start.yaml
+dry_run: false
+height: 350
+layout_member: 06-p3-start.yaml
+ok: true
+printed: true
+printer_response:
+    ok: true
+rendered_at: "2026-09-20T18:54:59Z"
+response:
+    height: 350
+    ok: true
+    printed: true
+    printerResponse:
+        ok: true
+    renderedAt: "2026-09-20T18:54:59Z"
+    width: 384
+source_kind: file
+status_code: 200
+url: https://almanach.crib.scapegoat.dev/api/render-and-print
+width: 384
+
+---
+
+printed: yes
