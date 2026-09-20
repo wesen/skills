@@ -576,6 +576,14 @@ TEMPLATE = r'''<!doctype html>
   .op-new { color:var(--new); } .op-modify { color:var(--mod); }
   mark { background:#5a4a12; color:#ffe9a8; padding:0 1px; }
   .empty { color:var(--muted); font-size:12px; }
+  .sumbox { border:1px solid var(--hair); border-left:2px solid var(--accent); background:#1d2127;
+    padding:10px 12px; display:flex; flex-direction:column; gap:6px; }
+  .sumhead { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .sumhead h4 { margin:0; }
+  .srow { display:grid; grid-template-columns:112px minmax(0,1fr); gap:10px; font-size:12px; }
+  .skey { color:var(--accent); font-size:10.5px; text-transform:uppercase; letter-spacing:1px; }
+  .sval { color:var(--ink); overflow-wrap:anywhere; }
+  .meta .s { color:var(--accent); }
   footer { color:#6f757d; font-size:10.5px; }
   .note { margin-top:36px; border:1px solid var(--hair); padding:15px 17px; color:var(--muted); font-size:12px; }
   code { color:var(--ink); background:#2b3038; padding:1px 5px; }
@@ -610,6 +618,7 @@ TEMPLATE = r'''<!doctype html>
       </select>
       <button class="btn" id="files-only" aria-pressed="false">has files</button>
       <button class="btn" id="expand-all">expand files</button>
+      <button class="btn" id="sum-only" aria-pressed="false">has summary</button>
       <span class="count" id="count"></span>
     </div>
     <div id="cards"></div>
@@ -620,7 +629,8 @@ TEMPLATE = r'''<!doctype html>
 <script>
 const SESSIONS = __DATA__;
 const FW = ["claude-code","pi","codex"].filter(f => SESSIONS.some(s => s.framework === f));
-const state = { q:"", fw:new Set(FW), filesOnly:false, sort:"time-asc", open:new Set(), expandAll:false };
+const state = { q:"", fw:new Set(FW), filesOnly:false, summariesOnly:false, sort:"time-asc", open:new Set(), expandAll:false };
+const SUMFIELDS = [["this turn","This turn"],["session so far","Session so far"],["issues","Issues"],["next steps","Next steps"]];
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
@@ -634,12 +644,13 @@ function highlight(text, q){
 function matches(s, q){
   if(!q) return true;
   const needle=q.toLowerCase();
-  return (s.title+" "+s.task+" "+s.outcome+" "+s.model+" "+s.branch+" "+s.files.map(f=>f[0]).join(" "))
+  const summaryText = (s.summaries||[]).map(x => Object.values(x.fields||{}).join(" ")+" "+(x.fallback||"")).join(" ");
+  return (s.title+" "+s.task+" "+s.outcome+" "+s.model+" "+s.branch+" "+summaryText+" "+s.files.map(f=>f[0]).join(" "))
     .toLowerCase().includes(needle);
 }
 function visible(){
   const list = SESSIONS.filter(s => state.fw.has(s.framework) && matches(s, state.q)
-    && (!state.filesOnly || s.files.length));
+    && (!state.filesOnly || s.files.length) && (!state.summariesOnly || s.summary_count));
   const by = { "time-asc":(a,b)=>a.started.localeCompare(b.started),
                "time-desc":(a,b)=>b.started.localeCompare(a.started),
                "files-desc":(a,b)=>b.files.length-a.files.length,
@@ -669,6 +680,19 @@ function renderChips(){
     render();
   }));
 }
+function summaryFields(block, q){
+  const rows = SUMFIELDS.filter(([k]) => block.fields && block.fields[k])
+    .map(([k,label]) => `<div class="srow"><span class="skey">${label}</span><span class="sval">${highlight(block.fields[k],q)}</span></div>`)
+    .join("");
+  return rows || `<p>${highlight(block.fallback || "(empty summary)", q)}</p>`;
+}
+function latestSummary(s, q){
+  if(!s.summary_count) return "";
+  const last = s.summaries[s.summaries.length-1];
+  const more = s.summary_count > 1 ? ` · ${s.summary_count} total` : "";
+  return `<div class="sumbox"><div class="sumhead"><h4>Latest summary${more}</h4></div>
+    ${summaryFields(last, q)}</div>`;
+}
 function renderCards(){
   const list = visible();
   const q = state.q.toLowerCase();
@@ -695,9 +719,11 @@ function renderCards(){
         <span>${esc(s.model)}</span><span>${s.turns} turns</span><span>${s.tools} tool calls</span>
         <span class="c">${s.create} new</span><span class="m">${s.modify} modified</span>
         <span>${s.read} read</span><span>${s.execute} exec</span>
+        ${s.summary_count?`<span class="s">${s.summary_count} summar${s.summary_count===1?"y":"ies"}</span>`:""}
       </div>
       <div><h4>Asked to</h4><p class="clamp">${highlight(s.task,q) || "<em>no substantive user turn recorded</em>"}</p>
         ${s.task.length>320?'<button class="more">show more</button>':""}</div>
+      ${latestSummary(s,q)}
       ${s.outcome?`<div><h4>Final report (agent's claim)</h4><p class="clamp">${highlight(s.outcome,q)}</p>
         ${s.outcome.length>320?'<button class="more">show more</button>':""}</div>`:""}
       ${files}
@@ -732,6 +758,8 @@ $("#side-search").addEventListener("input", e => { $("#q").value=e.target.value;
 $("#sort").addEventListener("change", e => { state.sort=e.target.value; render(); });
 $("#files-only").addEventListener("click", e => {
   state.filesOnly=!state.filesOnly; e.target.setAttribute("aria-pressed",state.filesOnly); render(); });
+$("#sum-only").addEventListener("click", e => {
+  state.summariesOnly=!state.summariesOnly; e.target.setAttribute("aria-pressed",state.summariesOnly); render(); });
 $("#expand-all").addEventListener("click", e => {
   state.expandAll=!state.expandAll; e.target.textContent=state.expandAll?"collapse files":"expand files"; render(); });
 document.addEventListener("keydown", e => {
