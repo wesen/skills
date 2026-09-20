@@ -584,6 +584,32 @@ TEMPLATE = r'''<!doctype html>
   .skey { color:var(--accent); font-size:10.5px; text-transform:uppercase; letter-spacing:1px; }
   .sval { color:var(--ink); overflow-wrap:anywhere; }
   .meta .s { color:var(--accent); }
+  /* expanded summary browser */
+  body.ov-open { overflow:hidden; }
+  #overlay { position:fixed; inset:0; z-index:30; background:rgba(8,9,11,.86);
+    display:flex; align-items:center; justify-content:center; padding:32px; }
+  #overlay[hidden] { display:none; }
+  .ov { background:var(--panel); border:1px solid var(--hair); width:min(1100px,100%);
+    height:min(86vh,900px); display:flex; flex-direction:column; }
+  .ov-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+    padding:14px 18px; border-bottom:1px solid var(--hair); }
+  .ov-head h3 { margin:0; font-size:16px; }
+  .ov-sub { color:var(--muted); font-size:11px; margin-top:3px; }
+  .ov-nav { display:flex; gap:6px; flex:0 0 auto; }
+  .ov-body { display:grid; grid-template-columns:320px minmax(0,1fr); min-height:0; flex:1; }
+  .ov-list { margin:0; padding:6px; list-style:none; overflow:auto; border-right:1px solid var(--hair); }
+  .ov-list li { display:grid; grid-template-columns:34px minmax(0,1fr); gap:8px; padding:7px 8px;
+    cursor:pointer; border-left:2px solid transparent; }
+  .ov-list li:hover { background:#262b33; }
+  .ov-list li.sel { background:#2b313a; border-left-color:var(--accent); }
+  .ov-num { color:var(--muted); font-size:11px; }
+  .ov-snip { font-size:11.5px; color:var(--ink); overflow:hidden; display:-webkit-box;
+    -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .ov-list time { grid-column:2; color:#6f757d; font-size:10.5px; }
+  .ov-detail { padding:18px 20px; overflow:auto; display:flex; flex-direction:column; gap:12px; }
+  .ov-detail .srow { grid-template-columns:130px minmax(0,1fr); font-size:13px; }
+  .ov-detail .sumhead h4 { font-size:11px; }
+  @media (max-width:820px){ .ov-body{grid-template-columns:1fr;} .ov-list{border-right:0;border-bottom:1px solid var(--hair);max-height:38%;} }
   footer { color:#6f757d; font-size:10.5px; }
   .note { margin-top:36px; border:1px solid var(--hair); padding:15px 17px; color:var(--muted); font-size:12px; }
   code { color:var(--ink); background:#2b3038; padding:1px 5px; }
@@ -624,6 +650,22 @@ TEMPLATE = r'''<!doctype html>
     <div id="cards"></div>
     <div class="note">__NOTE__</div>
   </main>
+</div>
+<div id="overlay" hidden>
+  <div class="ov" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+    <div class="ov-head">
+      <div><h3 id="ov-title"></h3><div class="ov-sub" id="ov-sub"></div></div>
+      <div class="ov-nav">
+        <button class="btn" id="ov-prev">‹ prev</button>
+        <button class="btn" id="ov-next">next ›</button>
+        <button class="btn" id="ov-close">close (esc)</button>
+      </div>
+    </div>
+    <div class="ov-body">
+      <ol class="ov-list" id="ov-list"></ol>
+      <div class="ov-detail" id="ov-detail"></div>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast">copied</div>
 <script>
@@ -690,7 +732,9 @@ function latestSummary(s, q){
   if(!s.summary_count) return "";
   const last = s.summaries[s.summaries.length-1];
   const more = s.summary_count > 1 ? ` · ${s.summary_count} total` : "";
-  return `<div class="sumbox"><div class="sumhead"><h4>Latest summary${more}</h4></div>
+  const label = s.summary_count > 1 ? `browse all ${s.summary_count}` : "open summary";
+  return `<div class="sumbox"><div class="sumhead"><h4>Latest summary${more}</h4>
+    <button class="btn sum-open" data-id="${esc(s.id)}">${label} ▸</button></div>
     ${summaryFields(last, q)}</div>`;
 }
 function renderCards(){
@@ -745,12 +789,54 @@ function renderCards(){
   $("#cards").querySelectorAll("details").forEach(d => d.addEventListener("toggle", () => {
     d.open ? state.open.add(d.dataset.id) : state.open.delete(d.dataset.id);
   }));
+  $("#cards").querySelectorAll(".sum-open").forEach(b => b.addEventListener("click", () => openOverlay(b.dataset.id)));
   const totalFiles = list.reduce((n,s)=>n+s.files.length,0);
   $("#count").textContent = `${list.length} of ${SESSIONS.length} sessions · ${totalFiles} files`;
 }
 let toastTimer;
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on");
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"),1400); }
+
+/* ---- expanded summary browser ---- */
+let ovSession = null, ovIndex = 0;
+function ovSelect(i){
+  if(!ovSession) return;
+  ovIndex = Math.max(0, Math.min(ovSession.summaries.length-1, i));
+  $("#ov-list").querySelectorAll("li").forEach(li =>
+    li.classList.toggle("sel", Number(li.dataset.i) === ovIndex));
+  const block = ovSession.summaries[ovIndex];
+  const when = block.at ? block.at.slice(0,19).replace("T"," ")+" UTC" : "turn "+(block.turn ?? "?");
+  $("#ov-detail").innerHTML =
+    `<div class="sumhead"><h4>Block ${ovIndex+1} of ${ovSession.summaries.length} · ${esc(when)}</h4></div>`
+    + summaryFields(block, "");
+  const sel = $("#ov-list").querySelector("li.sel");
+  if(sel) sel.scrollIntoView({block:"nearest"});
+}
+function ovClose(){ $("#overlay").hidden = true; document.body.classList.remove("ov-open");
+  ovSession = null; }
+function openOverlay(id){
+  const s = SESSIONS.find(x => x.id === id);
+  if(!s || !s.summary_count) return;
+  ovSession = s; ovIndex = s.summaries.length - 1;
+  $("#ov-title").textContent = s.title;
+  $("#ov-sub").textContent = `${s.summaries.length} summary block(s) · ${s.framework} · ${(s.started||"").slice(0,10)}`;
+  $("#ov-list").innerHTML = s.summaries.map((b,i) => {
+    const head = b.fields["this turn"] || b.fallback || "(empty summary)";
+    const when = b.at ? b.at.slice(0,16).replace("T"," ") : `turn ${b.turn ?? "?"}`;
+    return `<li data-i="${i}" class="${i===ovIndex?"sel":""}">
+      <span class="ov-num">#${i+1}</span><span class="ov-snip">${esc(head)}</span>
+      <time>${esc(when)}</time></li>`;
+  }).join("");
+  $("#ov-list").querySelectorAll("li").forEach(li =>
+    li.addEventListener("click", () => ovSelect(Number(li.dataset.i))));
+  ovSelect(ovIndex);
+  $("#overlay").hidden = false; document.body.classList.add("ov-open");
+  $("#ov-close").focus();
+}
+$("#ov-close").addEventListener("click", ovClose);
+$("#ov-prev").addEventListener("click", () => ovSelect(ovIndex-1));
+$("#ov-next").addEventListener("click", () => ovSelect(ovIndex+1));
+$("#overlay").addEventListener("click", e => { if(e.target === $("#overlay")) ovClose(); });
 function render(){ renderChips(); renderNav(); renderCards(); }
 
 $("#q").addEventListener("input", e => { state.q=e.target.value.trim(); render(); });
@@ -763,6 +849,12 @@ $("#sum-only").addEventListener("click", e => {
 $("#expand-all").addEventListener("click", e => {
   state.expandAll=!state.expandAll; e.target.textContent=state.expandAll?"collapse files":"expand files"; render(); });
 document.addEventListener("keydown", e => {
+  if(!$("#overlay").hidden){
+    if(e.key === "Escape"){ e.preventDefault(); ovClose(); }
+    else if(e.key === "ArrowDown"){ e.preventDefault(); ovSelect(ovIndex+1); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); ovSelect(ovIndex-1); }
+    return;
+  }
   if(e.key==="/" && !/input|select|textarea/i.test(document.activeElement.tagName)){ e.preventDefault(); $("#q").focus(); }
   else if(e.key==="Escape"){ state.q=""; $("#q").value=""; $("#side-search").value=""; render(); $("#q").blur(); }
 });
