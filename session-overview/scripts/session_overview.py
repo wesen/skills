@@ -152,6 +152,53 @@ def last_substantive(turns: list[dict], role: str, min_chars: int) -> str:
     return ""
 
 
+SUMMARY_FIELDS = ("this turn", "session so far", "issues", "next steps")
+SUMMARY_BLOCK_RE = re.compile(r"<summary>([\s\S]*?)</summary>", re.IGNORECASE)
+
+
+def parse_summary_block(block: str) -> tuple[dict[str, str], str]:
+    """Split a <summary> body into its four known fields, keeping free prose as fallback."""
+    sections: dict[str, list[str]] = {key: [] for key in SUMMARY_FIELDS}
+    fallback: list[str] = []
+    current: str | None = None
+    for raw_line in block.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        match = re.match(r"^([A-Za-z][A-Za-z ]*?):\s*(.*)$", line)
+        key = match.group(1).strip().lower() if match else None
+        if key in sections:
+            current = key
+            rest = match.group(2).strip()
+            if rest:
+                sections[current].append(rest)
+        elif current:
+            sections[current].append(line)
+        else:
+            fallback.append(line)
+    return ({key: " ".join(value) for key, value in sections.items()}, " ".join(fallback))
+
+
+def extract_summaries(turns: list[dict]) -> list[dict]:
+    """Every <summary> block an assistant emitted, in order, parsed into fields."""
+    summaries = []
+    for turn in turns:
+        if turn.get("role") != "assistant":
+            continue
+        content = turn.get("content") or ""
+        for match in SUMMARY_BLOCK_RE.finditer(content):
+            fields, fallback = parse_summary_block(match.group(1))
+            if not any(fields.values()) and not fallback:
+                continue
+            summaries.append({
+                "turn": turn.get("index"),
+                "at": turn.get("timestamp") or "",
+                "fields": {key: value for key, value in fields.items() if value},
+                "fallback": fallback,
+            })
+    return summaries
+
+
 def tool_input_path(tc: dict) -> str | None:
     inp = tc.get("input")
     if not isinstance(inp, dict):
@@ -209,6 +256,7 @@ def extract_sessions(archives: list[str], prefixes: list[str], min_chars: int, n
         tool_calls = doc.get("tool_calls") or []
         turns = doc.get("turns") or []
         counts = op_counts(tool_calls)
+        summaries = extract_summaries(turns)
         sessions.append({
             "id": str(doc.get("id") or (doc.get("provenance") or {}).get("original_session_id") or "?"),
             "framework": env.get("agent_framework") or "unknown",
@@ -228,6 +276,8 @@ def extract_sessions(archives: list[str], prefixes: list[str], min_chars: int, n
             "task": first_substantive(turns, "user", min_chars),
             "outcome": last_substantive(turns, "assistant", min_chars),
             "files": [] if no_files else files_touched(tool_calls, prefixes),
+            "summaries": summaries,
+            "summary_count": len(summaries),
             "source": (doc.get("provenance") or {}).get("source_path") or "",
         })
     sessions.sort(key=lambda s: s["started"] or "")
@@ -425,8 +475,9 @@ def main(argv: list[str]) -> int:
         print(f"wrote {json_path}")
 
     total_files = sum(len(s["files"]) for s in sessions)
+    total_summaries = sum(s.get("summary_count", 0) for s in sessions)
     print(f"wrote {out_path}")
-    print(f"{len(sessions)} session(s), {total_files} file target(s)")
+    print(f"{len(sessions)} session(s), {total_files} file target(s), {total_summaries} summary block(s)")
     if args.open_page:
         webbrowser.open(f"file://{os.path.abspath(out_path)}")
     return 0
