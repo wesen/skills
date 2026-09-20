@@ -179,6 +179,35 @@ def parse_summary_block(block: str) -> tuple[dict[str, str], str]:
     return ({key: " ".join(value) for key, value in sections.items()}, " ".join(fallback))
 
 
+def attach_summary_files(summaries: list[dict], tool_calls: list[dict], prefixes: list[str]) -> list[dict]:
+    """For each summary checkpoint, the files written since the previous checkpoint.
+
+    A block attributed to turn N owns every NEW/MODIFY emitted after the previous
+    block's turn and up to and including N. Tool calls without a turn index are
+    skipped rather than guessed at.
+    """
+    events = []
+    for tc in tool_calls:
+        if tc.get("operation_type") not in ("NEW", "MODIFY"):
+            continue
+        path = tool_input_path(tc)
+        turn = tc.get("emitting_turn_index")
+        if not path or not isinstance(turn, int) or isinstance(turn, bool):
+            continue
+        events.append((turn, shorten(path, prefixes), tc["operation_type"]))
+    previous: int | None = None
+    for block in summaries:
+        turn = block.get("turn")
+        delta: dict[str, str] = {}
+        if isinstance(turn, int) and not isinstance(turn, bool):
+            for event_turn, path, op in events:
+                if (previous is None or event_turn > previous) and event_turn <= turn:
+                    delta.setdefault(path, op)
+            previous = turn
+        block["files"] = sorted([path, op] for path, op in delta.items())
+    return summaries
+
+
 def extract_summaries(turns: list[dict]) -> list[dict]:
     """Every <summary> block an assistant emitted, in order, parsed into fields."""
     summaries = []
@@ -256,7 +285,7 @@ def extract_sessions(archives: list[str], prefixes: list[str], min_chars: int, n
         tool_calls = doc.get("tool_calls") or []
         turns = doc.get("turns") or []
         counts = op_counts(tool_calls)
-        summaries = extract_summaries(turns)
+        summaries = attach_summary_files(extract_summaries(turns), tool_calls, prefixes)
         sessions.append({
             "id": str(doc.get("id") or (doc.get("provenance") or {}).get("original_session_id") or "?"),
             "framework": env.get("agent_framework") or "unknown",
@@ -584,6 +613,8 @@ TEMPLATE = r'''<!doctype html>
   .skey { color:var(--accent); font-size:10.5px; text-transform:uppercase; letter-spacing:1px; }
   .sval { color:var(--ink); overflow-wrap:anywhere; }
   .meta .s { color:var(--accent); }
+  .snote { color:var(--muted); font-size:11px; border-top:1px solid var(--hair); padding-top:6px; }
+  ul.ov-files { max-height:180px; }
   /* expanded summary browser */
   body.ov-open { overflow:hidden; }
   #overlay { position:fixed; inset:0; z-index:30; background:rgba(8,9,11,.86);
@@ -728,14 +759,24 @@ function summaryFields(block, q){
     .join("");
   return rows || `<p>${highlight(block.fallback || "(empty summary)", q)}</p>`;
 }
+function summaryFiles(block, q){
+  const files = block.files || [];
+  if(!files.length) return "";
+  return `<div class="srow"><span class="skey">Files since last</span><span class="sval">
+    <ul class="files ov-files">${files.map(([p,op]) =>
+      `<li data-path="${esc(p)}"><span class="op op-${op.toLowerCase()}">${esc(op)}</span><span>${highlight(p,q)}</span></li>`).join("")}</ul>
+  </span></div>`;
+}
 function latestSummary(s, q){
   if(!s.summary_count) return "";
   const last = s.summaries[s.summaries.length-1];
   const more = s.summary_count > 1 ? ` · ${s.summary_count} total` : "";
   const label = s.summary_count > 1 ? `browse all ${s.summary_count}` : "open summary";
+  const changed = (last.files || []).length;
+  const note = changed ? `<div class="snote">${changed} file${changed===1?"":"s"} changed since the previous checkpoint — open to browse</div>` : "";
   return `<div class="sumbox"><div class="sumhead"><h4>Latest summary${more}</h4>
     <button class="btn sum-open" data-id="${esc(s.id)}">${label} ▸</button></div>
-    ${summaryFields(last, q)}</div>`;
+    ${summaryFields(last, q)}${note}</div>`;
 }
 function renderCards(){
   const list = visible();
@@ -808,7 +849,10 @@ function ovSelect(i){
   const when = block.at ? block.at.slice(0,19).replace("T"," ")+" UTC" : "turn "+(block.turn ?? "?");
   $("#ov-detail").innerHTML =
     `<div class="sumhead"><h4>Block ${ovIndex+1} of ${ovSession.summaries.length} · ${esc(when)}</h4></div>`
-    + summaryFields(block, "");
+    + summaryFields(block, "")
+    + summaryFiles(block, "");
+  $("#ov-detail").querySelectorAll(".files li").forEach(li => li.addEventListener("click", () =>
+    navigator.clipboard?.writeText(li.dataset.path).then(()=>toast("copied "+li.dataset.path)).catch(()=>toast(li.dataset.path))));
   const sel = $("#ov-list").querySelector("li.sel");
   if(sel) sel.scrollIntoView({block:"nearest"});
 }
