@@ -39,7 +39,7 @@ If `go-minitrace query commands history --help` shows nothing, the installed bin
 
 ### `history <verb>`
 
-- **`history file-history --path <fragment>`** — when was a file created/edited/read, in which session/turn, at what timestamp; per-file summary plus full timeline. Extracts every *structurally* file-path-shaped candidate from a tool call — the `file_path` column, each `*** Update/Add/Delete File:` header in a Codex patch, JSON `file_path`/`path` keys, shell redirect targets — and keeps those matching the fragment. Two consequences worth knowing: a multi-file Codex patch correctly attributes to every file it touches (`tool_calls.file_path` only records the first), and prose that merely mentions a path is not counted as a touch. Paths are home-normalized before grouping, so `~/x` and `/home/you/x` collapse into one summary row.
+- **`history file-history --path <fragment>`** — structural Codex file targets with independent outcomes and source references; non-Codex scalar/argument behavior remains supported. Attempts are not confirmed effects, and unknown prior existence stays unknown. Reconvert old Codex archives; do not recover writes by scanning opaque wrappers.
 - **`history ticket-timeline --ticket <fragment>`** — when was a docmgr ticket created (`docmgr ticket create`), and when were its `tasks.md`/`changelog.md`/diary files touched. Reports evidence (a command ran, a file was touched), not verified success — cross-check against the ticket's own git history for certainty.
 - **`history context-window --session <id> --turn <n>`** — for a given turn, reconstructs every file, tool call, and skill signal since the last compaction boundary. Combines a textual continuation-summary marker with a cache-read-collapse heuristic (`--boundary-method auto|summary-only|cache-collapse-only` — note kebab-case on the CLI even though the JS field is `boundaryMethod`); has no reliable signal on Codex archives (no comparable cache accounting — prefer `summary-only` there).
 
@@ -101,7 +101,7 @@ Cwd is a shortlist signal, not a content index. Relevant work may be hidden when
 
 When cwd discovery misses relevant work, use exact content signatures to shortlist raw JSONL files, then convert the shortlist. Prefer exact paths, commit hashes, ticket IDs, symbols, and unusual phrases over broad topic words.
 
-**Symbol frequency narrows; it does not attribute.** A relevance score that ranks sessions by symbol-hit count is a shortlisting device, not a conclusion. The decisive step is a query that filters on `operation_type IN ('NEW','MODIFY')` and groups distinct target files per session — it names what each session actually changed, not what it was exposed to. See `references/queries.md` ("Symbol-relevance score" and "Distinct files written per session").
+**Symbol frequency narrows; it does not attribute.** A relevance score that ranks sessions by symbol-hit count is a shortlisting device, not a conclusion. The decisive step is a query that filters on `operation_type IN ('NEW','MODIFY')` and groups distinct target files per session — it identifies targeted operations, not necessarily confirmed changes. For Codex, require files.evidence_status=confirmed and success=1 to claim an observed native effect, then verify repository state. See `references/queries.md` ("Symbol-relevance score" and "Distinct files written per session").
 
 **Adoption is a different question from implementation.** "Who adopted this into their own codebase" cannot be answered by grepping transcripts for symbols, because the symbol appears in review and investigation sessions too. Invert the search: start from the filesystem import graph (which files import the mechanism), then match those file paths against transcript writes. See `references/adoption-attribution.md`.
 
@@ -135,22 +135,19 @@ go-minitrace validate \
 
 The legacy `scripts/audit_codex_sources.sh` can inspect raw native metadata when debugging, but it is no longer required for collision safety.
 
-### Normalized adapter limitations
+### Codex fidelity and evidence (CODEX-FIDELITY-001)
 
-For some Codex transcripts:
+Reconvert older archives with the updated adapter. Paginated messages and native CommandExecution/FileChange items are normalized with native identity and source provenance. `exec` is opaque orchestration, not evidence that every command in its JavaScript ran. Never fall back to wrapper regex parsing to claim execution or writes.
 
-- `operation_type` is `OTHER` for exec and patch operations;
-- `command`, `file_path`, or `exit_code` may be empty;
-- commands, workdirs, and patch targets remain in `arguments_json`;
-- a nested subprocess exit code remains in `result`;
-- `success = 1` may mean only that the outer tool transport succeeded.
+- `success` is nullable; pending/cancelled/unknown are not failures or successes. Child exits do not establish wrapper success. Inspect `outcome_status`, native provenance and fidelity warnings.
+- `tool_call_count` counts records. Use `execution_record_count`, `model_invocation_count`, `orchestration_count` and `file_change_count` for different activity questions.
+- Query `files` for every target. `evidence_status='attempted'` is not an observed effect. Confirmed native file effects use `evidence_status='confirmed' AND success=1`. Even those are not independent proof of authorship; verify git/files externally.
+- `file_touch_count` counts evidence rows, not unique paths. `file_path` is only a first-target convenience. Codex file-history no longer scans arguments; empty results may mean unsupported syntax or missing evidence, not proof no change occurred.
+- Literal shell redirects are syntactic attempts. Search operands are not reads. Unsupported control flow/expansion/heredoc/cwd mutation produces diagnostics. Never use whole-script exit zero to confirm every statement.
+- Native cwd, source-line references and explicit-or-unknown associations matter. Null emitting turn indexes must not become turn zero. Context-window only includes explicitly associated tools.
+- Archive/receipt validation is structural, not semantic fidelity proof. For literal-tilde source-unavailable reports, independently expand and hash the source without modifying it.
 
-Inspect `arguments_json`, `result`, and the native transcript before concluding that an operation did not occur or succeeded. Verify commits and files against the repository itself.
-
-Two read-side consequences of the above:
-
-- **A mention is not a read.** A command that *searches for* a file (`find -name X`, `rg --files -g X`, a `for`-loop with `if test -f`) mentions the path in its arguments but may never open it. Prove a read occurred by inspecting `result` for the file's contents or a `FILE <path>` marker, not by matching the command text. See `references/queries.md` ("Verify a file was actually read") and `references/attribution.md` §11.
-- **`history file-history` may return empty for Codex patches.** The verb matches the `file_path` column, but Codex `apply_patch` target paths often live only in `arguments_json`. When the verb returns nothing for a file you have independent evidence was patched, fall back to a direct `arguments_json` query (see `references/queries.md`).
+Older query examples below and in references that scan arguments are candidate-discovery queries only; they must not be used as execution/write proof for Codex. Prefer the normalized structural ledger and native identities.
 
 ### Query engine
 

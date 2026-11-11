@@ -21,6 +21,27 @@ Use this checklist before final handoff.
 
 Reader orientation is a manual content check, not something proved by a heading, a glossary, or `docmgr doctor`. Keep it proportional to the document; do not require a fixed introductory template or an exhaustive overview.
 
+## Clarity before completeness
+
+- project-specific terms are explained at their first consequential use, with purpose rather than synonyms
+- difficult relationships have a small concrete instance where prose alone leaves inference work
+- the middle and ending continue explaining the design rather than becoming inventories of names and checks
+- technical corrections are distinguished from comprehension blockers; added detail earns its place
+
+## Whole-document second pass
+
+- the author studied the system before drafting; material claims are grounded in primary evidence or labelled assumptions
+- a complete first draft was reread end to end; specific comprehension and accuracy notes preceded revisions
+- important concepts have sufficient scope/relationships; examples and transitions reveal consequential preconditions and responsibilities
+- current behavior, proposed changes, open decisions and tested results remain distinguishable
+- prose, examples, diagrams and API sketches agree and cover their stated domain
+- implementation blockers are separated from ordinary implementation choices
+- revisions repair omissions and errors without defaulting to greater length or a rigid template
+- a final consistency reread reconciles changed passages with examples, decisions and implementation steps across the whole document
+- historical/process notes and repeated invariants do not overwhelm the reader's explanation
+
+Apply questions relevant to this design; do not invent lifecycle, persistence or concurrency requirements for unrelated topics. A self-check is not independent reader evidence. Preserve draft/review artifacts only when the task requests them. See the writing-style reference for the actual two-pass procedure.
+
 ## Bookkeeping
 
 - key files related via `docmgr doc relate`
@@ -47,4 +68,3 @@ Reader orientation is a manual content check, not something proved by a heading,
 - include validation status
 - include requested upload destination and the actual evidence level (upload result versus independent listing)
 - include any open questions or residual risks
-

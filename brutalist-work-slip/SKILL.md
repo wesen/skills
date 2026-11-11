@@ -39,12 +39,22 @@ was done" bullet list, an optional "what was tricky" list (marker `!`), a
 facts table (COMMIT + NEXT + extras), and a QR code linking to the commit URL
 on GitHub (when `--commit` is given).
 
+**Always use `--summary` to state the INTENT of the step, not just its actions.**
+One or two sentences answering "why does this step exist / what is it trying to
+achieve", so a future reader can reconstruct the reasoning without reading the
+commit. The `--did` bullets say *what* was done; `--summary` says *why it
+matters*.
+
+Good: `--summary "Add graceful converter discovery so a missing rsvg-convert
+never hard-fails document conversion."`
+Weak: `--summary "Added config and converter discovery."`
+
 ```bash
 python3 ~/.pi/agent/skills/brutalist-work-slip/scripts/work_slip.py status \
   --task GEPPETTO-RERANKER-002 \
   --label "STEP 3" \
   --title "Wired In: Factory, JS, Docs" \
-  --summary "Cohere constructs from profiles via the factory; gp.reranker works with zero JS changes." \
+  --summary "Intent: make Cohere rerank usable end-to-end so gp.reranker works with zero JS changes, via profile-driven factory construction." \
   --did "factory cohere case + key resolution" \
   --did "per-type validation diagnostics" \
   --did "goja parity proven from YAML" \
@@ -75,12 +85,18 @@ Prints: task id + label header, h1 title, optional summary, a `PLAN` checklist
 (one checkbox per phase), a facts table (PHASES count + NEXT + extras), and a
 QR code when `--url` is given (ticket, PR, or docs link).
 
+**Always use `--summary` to state the ticket's GOAL — what the whole effort is
+about** — not just a restatement of the phases. This is the slip most likely to
+be read cold months later, so it must explain the point of the ticket in plain
+language: the problem, what is being built, and why. Start it with `GOAL:` when
+useful. Keep it to 2–4 short sentences.
+
 ```bash
 python3 ~/.pi/agent/skills/brutalist-work-slip/scripts/work_slip.py plan \
   --task GEPPETTO-RERANKER-002 \
   --label PLAN \
   --title "Cohere Rerank Salvage Plan" \
-  --summary "Port PR 169 onto pkg/rerank and drop the deprecated legacy API." \
+  --summary "GOAL: replace the deprecated legacy rerank path with the ported pkg/rerank implementation so callers stop depending on removed code, while keeping Goja parity." \
   --phase "P1 adapter core" \
   --phase "P2 mock-server tests" \
   --phase "P3 factory wiring" \
@@ -105,7 +121,8 @@ Flag reference (`plan`): same common flags as `status`, except:
 
 - Title: ≤ ~54 chars, plain words; the h1 fits ~2–3 words per line.
 - Bullets/phases: ≤ ~40 chars each, start lowercase or with a phase tag; 3–6 items is the sweet spot (each gets up to 2 lines).
-- Summary: 1–2 short sentences; skip it when the lists say everything.
+- Summary: **required in practice** — `plan` states the ticket goal/context; `status` states the intent of the step. Never just re-list the bullets. Skip only when there is genuinely nothing to explain.
+- Persist forever: assume a slip is read cold. A `plan` slip must be understandable with no other context (what is this ticket, why does it exist); a `status` slip must explain the purpose of its step, not merely its mechanics.
 - Facts keys: short uppercase (`COMMIT`, `NEXT`, `TESTS`, `BRANCH`).
 - Nothing was tricky? Omit `--tricky` — do not print filler like "nothing".
 

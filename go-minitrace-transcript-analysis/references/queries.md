@@ -1,3 +1,8 @@
+
+## Current Codex evidence rule (CODEX-FIDELITY-001)
+
+The argument/result scans below are candidate-discovery patterns, not execution/write proof. For updated Codex archives use tool_calls.record_kind and files.evidence_kind/evidence_status/success. Select confirmed native effects with `files.evidence_status = 'confirmed' AND files.success = 1`; attempts remain unconfirmed even if the shell succeeded. Read all targets from files, not only tool_calls.file_path. Old archives require reconversion. Null outcomes and emitting indexes must remain unknown. Separate model_invocation_count from execution_record_count and total tool_call_count. Verify repository state independently.
+
 # Query Notes
 
 All queries run on the **normalized SQLite engine** via `go-minitrace query run`.

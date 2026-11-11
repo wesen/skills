@@ -15,6 +15,14 @@ This skill guides the creation of high-quality technical textbooks in Peter Norv
 - Balances prose paragraphs with bullet points for rhythm and emphasis
 - Creates interactive learning experiences that connect teaching text to working code
 
+## Research and whole-document revision
+
+For technical design guides, use the generic [design-guide writing guidance](../ticket-research-docmgr-remarkable/references/writing-style.md) for research, drafting and a second reading pass. It is the shared baseline for newcomer explanations; apply only the questions relevant to the document.
+
+Explain a local term's purpose at its first consequential use. Show a small concrete instance when relationships would otherwise require guessing, and explain what the reader should notice. Maintain that explanatory thread through the middle and ending. Prioritize understanding over exhaustive checklists; remove repeated rationale and details that do not help the reader.
+
+Finish a complete draft, then reread it as the reader's only explanation. Note specific comprehension gaps before revising; distinguish them from technical corrections. After revision, reconcile the examples, prose, diagrams, decisions and implementation steps across the whole document. This is part of the second pass, not a mandatory third draft. Preserve draft and review artifacts only when requested. An author's reread does not constitute independent reader testing.
+
 ## The Peter Norvig Style
 
 ### Core Characteristics

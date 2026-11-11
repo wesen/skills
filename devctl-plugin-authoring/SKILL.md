@@ -11,11 +11,13 @@ Build repo-specific dev environment logic as a devctl plugin while devctl handle
 
 ## Workflow
 
-Before implementing, run `devctl help --all` and use the topic slugs printed by
-that installed binary. In the current version, read `devctl help user-guide`,
-`devctl help scripting-guide`, and `devctl help plugin-authoring`. Treat the
-discovered slugs and schemas as authoritative rather than relying on remembered
-or prefixed aliases.
+Before implementing, discover the installed interface with `devctl help --all`.
+Read the listed user, scripting, and plugin-authoring topics (normally
+`devctl help user-guide`, `devctl help scripting-guide`, and
+`devctl help plugin-authoring`). Use `devctl <verb> --help` to check the flags
+for each lifecycle command you intend to document or execute. Use the installed
+protocol schemas and verify lifecycle semantics when selecting build, prepare,
+validation, or restart behavior.
 
 ### 1. Collect repo context
 
@@ -54,6 +56,21 @@ See `references/protocol-quickref.md` for minimal Python and bash skeletons.
 - `validate.run`: return actionable errors/warnings; do not hide failures. Check executables, repo-relative paths, profile/config files, and whether dependency directories such as `web/node_modules` are missing.
 - `launch.plan`: return services for devctl to supervise; do not start processes yourself.
 - `command.run`: execute a named command from `capabilities.commands`; return `exit_code`.
+
+#### Dynamic-command registration
+
+A plugin advertises custom commands in its handshake; devctl uses a persistent
+command catalog to expose them as CLI subcommands. Plugin configuration and
+command registration are separate steps:
+
+1. Add `command.run` and deterministic command specifications to the handshake.
+2. Run `devctl plugins refresh` for the intended repository and profile.
+3. Invoke the advertised command and test its argument handling.
+4. Refresh the catalog after changing command specifications or when devctl
+   requests a refresh because its catalog is missing or stale.
+
+`devctl plugins list` inspects plugin configuration; it is not a substitute for
+registering custom commands in the catalog.
 
 Dynamic command names are part of the handshake and therefore must be
 deterministic before a request is read. If commands vary by profile, advertise
@@ -94,6 +111,29 @@ Always honor:
 - `ctx.dry_run` by avoiding side effects.
 - `ctx.deadline_ms` by enforcing timeouts in subprocesses.
 
+#### Subprocess lifetime and cancellation
+
+Build and preparation commands are temporary children of the plugin, unlike
+long-running services returned by `launch.plan`. The plugin must own their
+complete lifetime:
+
+- Convert each request's `ctx.deadline_ms` into a monotonic deadline. Give each
+  subprocess only the remaining time; do not restart the full budget per step.
+- Route subprocess output to stderr and bound both output collection and
+  process waiting.
+- On timeout or cancellation, terminate and reap all owned descendants. If a
+  subprocess uses a separate process group, arrange explicit cleanup of that
+  group rather than relying on termination of the plugin's group.
+- Make shutdown safe during active work, idle request handling, and normal EOF.
+  Cleanup must be idempotent and must not signal unrelated processes.
+- In Python, use a deliberate child-cleanup and exit path for SIGTERM. Avoid
+  raising exceptions through interpreter teardown. Test termination during a
+  running subprocess and immediately after normal completion.
+
+A streaming-output helper is not a complete subprocess supervisor unless it
+also implements timeout, cancellation, and descendant cleanup. Test these
+properties with a slow fixture child before using expensive build commands.
+
 ### 5. Wire the repo config
 
 Add `.devctl.yaml` at repo root, e.g.:
@@ -109,11 +149,68 @@ Use the tight feedback loop:
 
 1) `devctl plugins list`
 2) `devctl plan`
-3) `devctl up --force` when replacing existing local processes/state
-4) `devctl status --tail-lines 5`
-5) `devctl logs --service <name> --tail 50 --follow` and `devctl logs --service <name> --stderr --tail 50 --follow` for services that log to stderr
+3) `devctl up` for a new environment; use replacement/force options only after inspecting installed help and confirming ownership
+4) `devctl status`
+5) `devctl logs <name> --tail 50` or `devctl logs <name> --stream stderr --tail 50 --follow`
 6) project-specific smoke test against the devctl-managed ports/DB/log paths
 7) `devctl down`
+
+#### Isolated lifecycle smoke tests
+
+Use a dedicated test environment with known process ownership and nonconflicting
+ports. Register cleanup before starting services so a failed assertion does not
+leave test processes behind:
+
+```bash
+# Only in a dedicated environment owned exclusively by this test.
+set -e
+trap 'devctl down' EXIT
+devctl up
+devctl status
+# Run the project's readiness and behavior assertions here.
+```
+
+Pass the same repo/config/profile arguments to launch and cleanup. Do not use a
+broad `down` trap in a shared environment or against pre-existing live services.
+Verify stopped state and retained exit evidence after cleanup.
+
+#### Build and restart contracts
+
+Building changes artifacts on disk; restarting replaces a running service
+attempt. Document them separately. In implementations that run the build phase
+during restart, an explicit build followed by a restart that skips rebuilding
+makes the intended artifact boundary visible:
+
+```bash
+devctl build --timeout 5m
+devctl restart <name> --skip-build
+```
+
+Check prepare and validation behavior too: `--skip-build` only skips the build
+phase. If preparation can modify the executable or its dependencies, the sequence
+alone does not establish an immutable artifact. Prefer atomically published,
+versioned artifacts, record their hashes, and associate the selected artifact
+with the new service run. A hash of the current on-disk binary does not identify
+an already-running executable.
+
+Keep restart planning idempotent and avoid recursive lifecycle commands inside
+plugins. Use devctl's built-in start/restart/down operations for supervision.
+For hardware or stateful services, document domain-specific quiescence and
+handoff prerequisites; process termination is not proof that external effects
+have stopped.
+
+#### Interpreting status
+
+Read these independently:
+
+- **Desired state:** what the operator requested.
+- **Process/run state and exit evidence:** whether the service is running and
+  how a completed attempt ended.
+- **Health result:** what the last readiness probe observed, including its time.
+
+An exited service can retain a successful historical health result. Health
+checks should test the intended readiness contract without mutating external
+systems; they are not evidence of current liveness after process exit.
 
 If protocol issues appear, retry with `devctl --log-level debug plugins list`.
 
@@ -121,7 +218,9 @@ If protocol issues appear, retry with `devctl --log-level debug plugins list`.
 
 - **stdout contamination**: non-JSON output on stdout; move logs to stderr.
 - **missing handshake**: first stdout frame not a handshake; emit immediately.
-- **timeouts**: enforce per-command timeouts using `ctx.deadline_ms`.
+- **timeouts or orphaned build children**: verify the subprocess lifetime contract above, including remaining request budget and descendant cleanup.
+- **custom command unavailable**: refresh the command catalog for the intended repo/profile and verify the advertised name and arguments.
+- **shutdown errors**: exercise cancellation while busy and idle; verify cleanup is idempotent and terminates only owned processes.
 - **health failures**: check ports/URLs and health config in `launch.plan`.
 - **Compose exits during startup**: inspect both stdout and stderr with separate
   `devctl logs` calls; BuildKit progress usually appears on stdout, while daemon

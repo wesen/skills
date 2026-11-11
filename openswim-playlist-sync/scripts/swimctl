@@ -1,0 +1,354 @@
+#!/usr/bin/env bash
+# swimctl — load audio onto a Shokz OpenSwim MP3 player.
+#
+# Commands:
+#   status                      Show detected device, mount state, and current tracks in play order.
+#   playlist [PLAYLIST_URL]     List the Swim playlist (default) via yt-dlp.
+#   load [opts] ID [ID...]      Download, split, clear, and copy in argument order.
+#   clear                       Remove all *.mp3 from the device.
+#   mount | unmount             Mount / unmount the OpenSwim partition.
+#
+# load options:
+#   --segment SECONDS   Split length (default 900 = 15 min, lossless copy).
+#   --no-clear          Keep existing tracks on the device.
+#   --keep-work         Do not reuse; re-download and re-split from scratch.
+#   --dry-run           Print the plan (and cached/downloaded sizes) without touching the device.
+#   --quiet             Suppress per-file progress; keep stage summaries.
+#
+# Requires: yt-dlp, ffmpeg/ffprobe, udisksctl, lsblk.
+
+set -euo pipefail
+
+WORK="${OPENSWIM_WORK:-$HOME/.cache/openswim}"
+PLAYLIST_URL_DEFAULT="https://www.youtube.com/watch?v=opLbbZ-_AWE&list=PLaKN83gQzNgQ"
+SEGMENT=900
+DO_CLEAR=1
+DRY_RUN=0
+QUIET=0
+KEEP_WORK=0
+
+log() { printf '%s\n' "$*" >&2; }
+verbose() { [ "$QUIET" = 1 ] || printf '%s\n' "$*" >&2; }
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+need() { command -v "$1" >/dev/null || die "missing dependency: $1"; }
+
+# ---------------------------------------------------------------- helpers ---
+fmt_size() {
+  awk -v b="$1" 'BEGIN{
+    if (b >= 1073741824) printf "%.2f GB", b/1073741824;
+    else if (b >= 1048576) printf "%.1f MB", b/1048576;
+    else printf "%.0f KB", b/1024;
+  }'
+}
+
+fmt_dur() {
+  local s=$1
+  printf '%dh%02dm%02ds' $((s/3600)) $((s%3600/60)) $((s%60))
+}
+
+# Bytes of a file list (empty list -> 0).
+sum_bytes() {
+  local total=0 f
+  for f in "$@"; do
+    [ -n "$f" ] && [ -f "$f" ] || continue
+    total=$((total + $(stat -c %s "$f")))
+  done
+  printf '%s' "$total"
+}
+
+# ---------------------------------------------------------------- device ----
+device() {
+  local dev
+  dev=$(udisksctl status 2>/dev/null | awk '/ONSEMI/ {print $NF; exit}')
+  [ -n "$dev" ] || die "OpenSwim not found (no ONSEMI LC8234xx entry in udisksctl status). Is it plugged in and POWERED ON?"
+  printf '/dev/%s1' "$dev"
+}
+
+mountpoint_of() {
+  findmnt -n -o TARGET "$1" 2>/dev/null || true
+}
+
+ensure_mounted() {
+  local part="$1" mp
+  mp=$(mountpoint_of "$part")
+  if [ -z "$mp" ]; then
+    lsblk -no FSTYPE "$part" 2>/dev/null | grep -q vfat \
+      || die "$part has no vfat filesystem — device may be off, or this is not the OpenSwim."
+    log "mounting $part ..."
+    mp=$(udisksctl mount -b "$part" 2>&1 | sed -n 's/.* at \(.*\)$/\1/p')
+    [ -n "$mp" ] || die "failed to mount $part"
+    log "mounted $part at $mp"
+  fi
+  printf '%s' "$mp"
+}
+
+# Fail fast (with a useful message) if the player was unplugged.
+assert_present() {
+  local part="$1" done_count="$2" total="$3"
+  [ -n "$(mountpoint_of "$part")" ] \
+    || die "device $part disappeared after $done_count/$total files — unplugged or powered off? Replug, power on, and re-run (downloads/segments are cached)."
+}
+
+order_list() {
+  # Oldest mtime plays first.
+  local mp="$1"
+  ( cd "$mp" && ls -1 --time-style='+%Y-%m-%d %H:%M' -l *.mp3 2>/dev/null ) \
+    | awk '{print $6, $7, $8}' || true
+}
+
+cmd_status() {
+  local part mp
+  part=$(device)
+  log "device: $part"
+  lsblk -o NAME,SIZE,FSTYPE,LABEL,MODEL "$part" >&2
+  mp=$(mountpoint_of "$part")
+  if [ -z "$mp" ]; then
+    log "not mounted (run: swimctl mount)"
+    return 0
+  fi
+  log "mounted at: $mp"
+  log "usage: $(df -h "$mp" | awk 'NR==2 {print $3" of "$2" ("$5")"}')"
+  log ""
+  log "tracks in playback order (mtime ascending):"
+  order_list "$mp" || log "  (empty)"
+  local count
+  count=$( ( cd "$mp" && ls -1 *.mp3 2>/dev/null || true ) | wc -l )
+  log ""
+  log "total: $count segment(s), $(sum_bytes "$mp"/*.mp3 | head -1) bytes on device"
+}
+
+cmd_playlist() {
+  local url="${1:-$PLAYLIST_URL_DEFAULT}"
+  # The bare playlist URL works with current yt-dlp. If it ever prints NA,
+  # fall back to a watch URL that carries the same &list= parameter.
+  yt-dlp --flat-playlist --print "%(playlist_index)s. %(title)s [%(id)s]" "$url"
+}
+
+cmd_clear() {
+  local part mp
+  part=$(device); mp=$(ensure_mounted "$part")
+  shopt -s nullglob
+  local files=("$mp"/*.mp3)
+  shopt -u nullglob
+  if [ ${#files[@]} -eq 0 ]; then log "nothing to clear"; return 0; fi
+  rm -f "${files[@]}"
+  sync
+  log "cleared ${#files[@]} file(s) from $mp"
+}
+
+cmd_mount()   { ensure_mounted "$(device)" >/dev/null && log ok; }
+cmd_unmount() {
+  local part
+  part=$(device)
+  sync
+  if [ -n "$(mountpoint_of "$part")" ]; then
+    udisksctl unmount -b "$part"
+  else
+    log "not mounted"
+  fi
+}
+
+slug() {
+  printf '%s' "$1" \
+    | iconv -f UTF-8 -t ASCII//TRANSLIT 2>/dev/null \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' \
+    | cut -c1-32 \
+    | sed -E 's/-[^-]*$//'
+}
+
+# Probe "title|duration_seconds" once per id; cached in associative arrays.
+declare -A TITLE_OF=() DUR_OF=()
+
+probe_video() {
+  local id="$1" meta
+  if [ -z "${TITLE_OF[$id]:-}" ]; then
+    meta=$(yt-dlp --no-playlist --skip-download \
+      --print "%(title)s|%(duration)s" "https://www.youtube.com/watch?v=$id" 2>/dev/null | head -1)
+    TITLE_OF[$id]="${meta%%|*}"
+    DUR_OF[$id]="${meta##*|}"
+  fi
+}
+
+cmd_load() {
+  local ids=() plan_src=() plan_dest=() plan_id=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --segment) SEGMENT="$2"; shift 2 ;;
+      --no-clear) DO_CLEAR=0; shift ;;
+      --keep-work) KEEP_WORK=1; shift ;;
+      --dry-run) DRY_RUN=1; shift ;;
+      --quiet|-q) QUIET=1; shift ;;
+      -*) die "unknown option: $1" ;;
+      *) ids+=("$1"); shift ;;
+    esac
+  done
+  [ ${#ids[@]} -gt 0 ] || die "load needs at least one YouTube video id"
+  need yt-dlp; need ffmpeg; need ffprobe
+
+  local t0=$SECONDS
+  mkdir -p "$WORK/downloads" "$WORK/segments"
+  if [ "$KEEP_WORK" = 1 ]; then
+    log "work dir reset requested (--keep-work): dropping cached downloads/segments"
+    rm -rf "$WORK/downloads" "$WORK/segments"
+    mkdir -p "$WORK/downloads" "$WORK/segments"
+  fi
+
+  # 1) Download + split per video id, with per-video progress.
+  local nvid=${#ids[@]} vi=0 id mp3
+  for id in "${ids[@]}"; do
+    vi=$((vi+1))
+    probe_video "$id"
+    log "[$vi/$nvid] $id  ${TITLE_OF[$id]:-<unknown title>}"
+    if [ -n "${DUR_OF[$id]:-}" ] && [ "${DUR_OF[$id]}" != "NA" ]; then
+      log "        duration $(fmt_dur "${DUR_OF[$id]}") — ~$(( (DUR_OF[$id] + SEGMENT - 1) / SEGMENT )) x $((SEGMENT/60))min segments"
+    fi
+
+    mp3=$(ls "$WORK"/downloads/*"[$id]"*.mp3 2>/dev/null | head -1 || true)
+    if [ -n "$mp3" ]; then
+      log "        audio cached: $(basename "$mp3") ($(fmt_size "$(stat -c %s "$mp3")"))"
+    else
+      log "        downloading audio (v0 mp3) ..."
+      local dl_start=$SECONDS
+      # Throttled progress: one line per 10%, so long downloads are traceable
+      # without flooding the terminal.
+      yt-dlp -x --audio-format mp3 --audio-quality 0 --no-playlist --newline \
+        --progress-template "progress:%(progress._percent_str)s" \
+        -o "$WORK/downloads/%(title).100B [%(id)s].%(ext)s" \
+        "https://www.youtube.com/watch?v=$id" 2>&1 \
+        | awk -F: '/^progress:/ { p=$NF; gsub(/[^0-9.]/,"",p); p=int(p); if (p>=next) { printf "          %3d%%\n", p; next=p+10 } }' >&2 \
+        || die "yt-dlp failed for $id (try: yt-dlp -U)"
+      mp3=$(ls "$WORK"/downloads/*"[$id]"*.mp3 | head -1)
+      log "        downloaded $(fmt_size "$(stat -c %s "$mp3")") in $(fmt_dur $((SECONDS-dl_start)))"
+    fi
+
+    if [ ! -f "$WORK/segments/$id/seg_000.mp3" ]; then
+      log "        splitting into ${SEGMENT}s segments ..."
+      local sp_start=$SECONDS
+      mkdir -p "$WORK/segments/$id"
+      ffmpeg -hide_banner -loglevel error -i "$mp3" \
+        -f segment -segment_time "$SEGMENT" -c copy "$WORK/segments/$id/seg_%03d.mp3"
+      log "        split into $(ls "$WORK/segments/$id"/seg_*.mp3 | wc -l) segments in $(fmt_dur $((SECONDS-sp_start)))"
+    else
+      log "        segments cached: $(ls "$WORK/segments/$id"/seg_*.mp3 | wc -l) files ($(fmt_size "$(sum_bytes "$WORK/segments/$id"/seg_*.mp3)"))"
+    fi
+  done
+
+  # 2) Plan destinations (labels come from the video title).
+  log "planning playback order ..."
+  local n=1 label title src seg
+  for id in "${ids[@]}"; do
+    title="${TITLE_OF[$id]:-}"
+    label=$(slug "${title:-$id}"); [ -n "$label" ] || label="$id"
+    for src in "$WORK/segments/$id"/seg_*.mp3; do
+      seg=$(basename "$src" .mp3 | sed 's/seg_//')
+      plan_src+=("$src")
+      plan_dest+=("$(printf '%02d-%s_seg%s.mp3' "$n" "$label" "$seg")")
+      plan_id+=("$id")
+      n=$((n+1))
+    done
+  done
+  local total=${#plan_src[@]}
+  [ "$total" -gt 0 ] || die "nothing to copy (no segments produced)"
+  local total_bytes
+  total_bytes=$(sum_bytes "${plan_src[@]}")
+
+  # Per-talk summary of the plan.
+  local prev="" i=1
+  for i in $(seq 0 $((total-1))); do
+    if [ "${plan_id[$i]}" != "$prev" ]; then
+      prev="${plan_id[$i]}"
+      log "        ${plan_id[$i]}  ->  segments ${plan_dest[$((i))]%%-*}"
+    fi
+  done
+  log "total: $total segment(s), $(fmt_size "$total_bytes") to write"
+
+  # 3) Preflight device state + space, before touching anything.
+  local part mp avail
+  part=$(device); mp=$(ensure_mounted "$part")
+  avail=$(df -B1 --output=avail "$mp" | tail -1)
+  log "device: $part at $mp — $(fmt_size "$avail") free"
+  if [ "$total_bytes" -gt "$avail" ]; then
+    die "not enough space: need $(fmt_size "$total_bytes"), have $(fmt_size "$avail")"
+  fi
+  if [ "$DO_CLEAR" = 1 ]; then
+    shopt -s nullglob
+    local old=("$mp"/*.mp3)
+    shopt -u nullglob
+    local old_bytes
+    old_bytes=$(sum_bytes "${old[@]}")
+    log "removing ${#old[@]} existing track(s) ($(fmt_size "$old_bytes"))"
+  fi
+
+  if [ "$DRY_RUN" = 1 ]; then
+    log ""
+    log "dry run — would copy in this order:"
+    for i in $(seq 0 $((total-1))); do
+      printf '  [%02d/%02d] %s\n' $((i+1)) "$total" "${plan_dest[$i]}" >&2
+    done
+    return 0
+  fi
+
+  # 4) Clear, copy with progress, fix mtimes, verify, sync, unmount.
+  if [ "$DO_CLEAR" = 1 ]; then
+    shopt -s nullglob
+    local old=("$mp"/*.mp3)
+    shopt -u nullglob
+    if [ ${#old[@]} -gt 0 ]; then
+      rm -f "${old[@]}"
+      sync
+      log "cleared ${#old[@]} old track(s)"
+    fi
+  fi
+
+  local base dest sz copied_bytes=0 cp_start=$SECONDS
+  base=$(date +%s)
+  for i in $(seq 0 $((total-1))); do
+    src="${plan_src[$i]}"; dest="${plan_dest[$i]}"
+    assert_present "$part" "$i" "$total"
+    cp "$src" "$mp/$dest"
+    # Playback order is mtime order. NEVER use `touch -t` with a composed
+    # string here: a malformed value is silently parsed and inverts the order.
+    touch -m -d "@$((base + 60*i))" "$mp/$dest"
+    sz=$(stat -c %s "$mp/$dest")
+    copied_bytes=$((copied_bytes + sz))
+    verbose "$(printf '[%02d/%02d]' $((i+1)) "$total") $dest  $(fmt_size "$sz")  ${copied_bytes} / ${total_bytes} bytes"
+  done
+
+  # 5) Verify what actually landed, then sync + unmount.
+  local onfst
+  onfst=$( ( cd "$mp" && ls -1 *.mp3 2>/dev/null || true ) | wc -l )
+  log "wrote $total segment(s), $(fmt_size "$copied_bytes") in $(fmt_dur $((SECONDS-cp_start)))"
+  [ "$onfst" -eq "$total" ] || die "expected $total tracks on device, found $onfst — re-run to repair"
+  sync
+  log "flushed to disk (sync)"
+
+  log ""
+  log "playback order:"
+  order_list "$mp"
+  log ""
+  log "done in $(fmt_dur $((SECONDS-t0))) — device usage: $(df -h "$mp" | awk 'NR==2 {print $3" of "$2" ("$5")"}')"
+
+  if [ "${OPENSWIM_NO_UNMOUNT:-0}" != 1 ]; then
+    if udisksctl unmount -b "$part" >/dev/null; then log "unmounted $part — safe to unplug"; fi
+  else
+    log "left mounted at $mp (OPENSWIM_NO_UNMOUNT=1)"
+  fi
+}
+
+main() {
+  local cmd="${1:-status}"; shift || true
+  case "$cmd" in
+    status)   cmd_status "$@" ;;
+    playlist) cmd_playlist "$@" ;;
+    load)     cmd_load "$@" ;;
+    clear)    cmd_clear "$@" ;;
+    mount)    cmd_mount "$@" ;;
+    unmount)  cmd_unmount "$@" ;;
+    -h|--help|help|"") sed -n '3,25p' "$0" | sed 's/^# \?//' ;;
+    *) die "unknown command: $cmd (try: swimctl help)" ;;
+  esac
+}
+
+main "$@"
