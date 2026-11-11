@@ -1,0 +1,5 @@
+# build artifacts / junk
+__pycache__/
+.trash/
+dist/
+*.zip
