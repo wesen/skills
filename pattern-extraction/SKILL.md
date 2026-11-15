@@ -145,11 +145,11 @@ Use these sections, in this order, as `##` headings. Target 1,500 to 2,500 words
 | **Forces** | Four to seven bullets, each a tension between two goods: "**Fluency against reuse.** Chaining reads well, but chaining onto a shared object changes it for every holder." |
 | **Solution** | One bold paragraph starting "Therefore:". It is the part a reader remembers, so make it complete on its own. |
 | **Applicability** | Use it when …; do not use it when … (always include the second). |
-| **Structure** | A table of participants and their responsibilities. |
+| **Structure** | A table of participants: `Participant \| Responsibility \| Needed`. "Always" for the core; "only when …" with the condition under which a participant earns its place. A participant is a responsibility (a function, a field, a table row), not a module. |
 | **Collaborations** | Numbered steps of how the participants work together, with a mermaid diagram only when the shape is the point. |
-| **Sketch** | Language-neutral pseudocode of the shape, with sections commented, ending with the pattern in use. |
+| **Sketch** | Language-neutral pseudocode of the shape, with sections commented, ending with the pattern in use. Show the shape, not the originating project: its specific mechanisms go in the notes and known uses; numbers are placeholders unless a note says where they were measured; optional parts carry a comment naming their condition. |
 | **Implementation notes** | Eight to eleven numbered notes. Each is a decision or a trap, with a bold lead. The project's real lessons go here, named plainly: "This is the bug the originating project shipped." |
-| **Variations** | Three or four named alternatives, each with its trade-off. |
+| **Variations** | Three or four named alternatives, each with its trade-off. The first is always the **smallest form**: only the "always" participants, what it gives up, when it is enough. |
 | **Consequences** | Bullets marked + and −, three or four of each. |
 | **Known uses** | Real systems, libraries, papers or tools only. Prefer well-known ones. |
 | **Related chapters** | Links to the chapters this one connects to, plus classic GoF patterns where they apply (Builder, Command, Memento, Composite, Decorator, Interpreter). |
@@ -171,6 +171,7 @@ Use these sections, in this order, as `##` headings. Target 1,500 to 2,500 words
 
 ## Writing rules
 
+- **Roles, not modules.** Agents that built software from chapters wrote one module per Structure row and copied the originating project's details from the sketches; blind reviewers judged builds made without the chapter better adapted, while the chapter builds resolved more forces. Mark what is conditional, keep project specifics out of the sketch, and lead the variations with the smallest form.
 - **Conceptual over prescriptive.** Pseudocode shows the shape. No library names, framework calls or host-language tricks in a sketch.
 - **Portable.** Project identifiers appear only in the running example and in notes about the originating project. Each chapter must make sense with another domain swapped in.
 - **Honest.** Name the project's own mistakes and debts in the implementation notes. A pattern book that only shows the good parts teaches less.
