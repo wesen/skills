@@ -217,7 +217,7 @@ cmd_load() {
         --progress-template "progress:%(progress._percent_str)s" \
         -o "$WORK/downloads/%(title).100B [%(id)s].%(ext)s" \
         "https://www.youtube.com/watch?v=$id" 2>&1 \
-        | awk -F: '/^progress:/ { p=$NF; gsub(/[^0-9.]/,"",p); p=int(p); if (p>=next) { printf "          %3d%%\n", p; next=p+10 } }' >&2 \
+        | awk -F: '/^progress:/ { p=$NF; gsub(/[^0-9.]/,"",p); p=int(p); if (p>=nxt) { printf "          %3d%%\n", p; nxt=p+10 } }' >&2 \
         || die "yt-dlp failed for $id (try: yt-dlp -U)"
       mp3=$(ls "$WORK"/downloads/*"[$id]"*.mp3 | head -1)
       log "        downloaded $(fmt_size "$(stat -c %s "$mp3")") in $(fmt_dur $((SECONDS-dl_start)))"
