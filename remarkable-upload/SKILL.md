@@ -18,7 +18,12 @@ This specialist skill owns upload mechanics, authentication and success evidence
 
 ## Optional subagent finalization
 
-Once the main agent has finished the substantive Markdown, prefer handing routine finalization to a smaller-model subagent when delegation is available and permitted. Use Luna (`gpt-5.6-luna`) when offered, or a comparable available model; otherwise finalize locally without blocking delivery. Keep research, substantive writing, and ambiguous decisions with the main agent. This handoff keeps routine tool output out of the main conversation context.
+Once the main agent has finished the substantive Markdown, prefer handing routine finalization to a smaller-model subagent when delegation is available and permitted. Pick the cheapest capable model the harness offers:
+
+- **Codex / pi:** Luna (`gpt-5.6-luna`) when offered, or a comparable small model.
+- **Claude Code:** spawn the subagent with the Agent tool and `model: "haiku"`. Use `"sonnet"` only if `haiku` is unavailable or fails the task. Never use the main model just to upload.
+
+If no cheaper model is available, finalize locally without blocking delivery. Keep research, substantive writing, and ambiguous decisions with the main agent. This handoff keeps routine tool output out of the main conversation context.
 
 Give the subagent a bounded task with minimal context rather than the full research conversation:
 
