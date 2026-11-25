@@ -181,6 +181,7 @@ Writing rules:
 - Prefer concrete APIs, types, and pseudocode over vague recommendations.
 - Use diagrams for boundaries and flows.
 - Use tables for tradeoffs and component responsibilities.
+- Lay out for a tablet: code-block lines at most 60 characters where possible, and break down any table that would render wider than the page (see `ticket-research-docmgr-remarkable/references/writing-style.md`, "Lay out for reading on a tablet").
 - Add decision records whenever a recommendation chooses between viable alternatives.
 - Cite local files and line ranges for major claims.
 - Distinguish “observed in source/docs” from “recommended design inference.”
