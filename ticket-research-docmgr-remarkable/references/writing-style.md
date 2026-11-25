@@ -42,6 +42,13 @@ Include compact decision records for consequential choices: context, realistic a
 
 Connect the implementation plan to real entry points, affected consumers, removal/migration work and meaningful validation. Preserve required edge cases without enumerating every imaginable failure. Do not add compatibility layers or frameworks merely to make a generic pattern appear comprehensive. State performance/security/operational claims at the strength supported by evidence. Include one useful starting command or concrete navigation path when the reader needs to work in a repository; do not bury them in an inventory of commands.
 
+## Lay out for reading on a tablet
+
+Design documents are often read as PDFs on a reMarkable tablet, where a long line wraps mid-token or runs off the page.
+
+- Keep each line of a code block (code, pseudocode, ASCII diagrams, command examples) to 60 characters where possible. Break a long call across lines, one argument or chained step per line, and shorten names in an illustrative sketch rather than let a line run long.
+- If a table would render wider than the page (many columns, or cells holding sentences), it should probably be broken down: split it into smaller tables, turn it into one short list per row, or move long cell text into the prose below it.
+
 ## Second writing pass: diagnose first, then revise
 
 Finish and save the first draft before reviewing it. Reread the entire draft as if this were the reader's only explanation. Do not merely polish sentences. In a separate review note, record concrete passages, missing information, likely misunderstanding and the intended correction BEFORE applying revisions.
